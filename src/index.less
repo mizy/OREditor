@@ -1,0 +1,45 @@
+
+@keyframes mEditorShow {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+.meditor{
+    .content{
+        cursor: text;
+        min-width: 200px;
+
+        padding:20px;
+        box-shadow: 0px 0px 5px #999;
+        .p{
+            line-height: 30px;
+            min-height: 30px;
+        }
+    }
+    #edit-input,#cursor{
+        position: absolute;
+    }
+    #cursor{
+        cursor: text;
+        opacity: 1;
+        width: 2px;
+        background-color: #333;
+        animation-name: mEditorShow;
+        animation-duration:  500ms;
+        animation-timing-function:  ease ;
+        animation-iteration-count:  infinite;
+        animation-direction:  alternate;
+    }
+    #edit-input{
+        width:2px;
+        opacity: 0;
+        height: 0.5px;
+        margin-top:20px;
+        white-space: nowrap;
+        outline: none;
+        user-select: none;
+    }
+}
