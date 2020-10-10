@@ -98,15 +98,20 @@ class Content{
 
             this.moveCursor(pos);
         });
-        this.input.addEventListener("keyup",(e)=>{
+        this.input.addEventListener("keydown",(e)=>{
             if(!this.activeComponent)return;
-            console.log(e);
             if(e.code === 'Backspace'){
                 const selection = document.getSelection();
                 const range = selection.getRangeAt(0);
-                console.log(selection,range);
-                if(!selection.rangeCount){
-                    this.activeComponent.backdelete(this.startPos.offset-1,this.startPos.offset-1)
+                if(document.activeElement===this.input){
+                    this.activeComponent.backdelete(this.startPos.offset-1,this.startPos.offset);
+                    this.startPos.offset--;
+                    const activeNode = this.activeComponent.getActiveNode();
+                    const range = document.createRange();
+                    range.setStart(activeNode,this.startPos.offset);
+                    range.setEnd(activeNode,this.startPos.offset);
+                    const pos = range.getBoundingClientRect();
+                    this.moveCursor(pos)
                 }
             }
         })
