@@ -7,7 +7,7 @@ class Schema{
         this.editor = editor;
     }
 
-    setData(){
+    setData(data){
         
     }
 }

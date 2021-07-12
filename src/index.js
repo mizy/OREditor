@@ -9,7 +9,10 @@ class OREditor {
     constructor(container,option){
         this.container = container;
         this.option = Object.assign({
-            height:600
+            height:600,
+            offset:{
+                x:20,y:40
+            }
         },option);
         this.init();
     }
@@ -17,6 +20,9 @@ class OREditor {
     init(){
         this.initDOM();
         this.page = new Page(this);
+        requestAnimationFrame(()=>{
+            this.resize();
+        })
         this.addEvent();
     }
 
@@ -35,9 +41,14 @@ class OREditor {
        
     }
 
+    resize(){
+        this.rect = this.dom.getBoundingClientRect();
+        this.page.resize()
+    }
+
     addEvent(){
-        this.dom.addEventListener('click',()=>{
-            this.page.cursor.focus();
+        this.dom.addEventListener('click',(event)=>{
+            this.page.cursor.locate(event)
         })
     }
 }

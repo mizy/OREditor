@@ -3,10 +3,13 @@
     display: flex;
     justify-content: center;
     padding: 20px;
-
-    .ore-page{
+    .ore-container{
         box-shadow: 0 0 10px #ccc;
         background-color: #fff;
+        position:relative;
+        cursor: text;
+    }
+    .ore-page{
         position:relative;
         cursor: text;
         .ore-cursor{
@@ -16,8 +19,10 @@
             border:none;
             outline: none;
             border-radius: 0;
+            pointer-events: none;
+            padding: 0;
+            background-color: transparent;
             &.blur{
-                margin-left:2px;
                 border-left: 1px solid #999;
             }
         }
@@ -27,6 +32,10 @@
             top:0;
             border:none;
             outline: none;
+            font-size: 14px;
+        }
+        .measure-canvas{
+            display: none;
         }
     }
 }

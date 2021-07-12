@@ -4686,6 +4686,11 @@ supports-color@^8.0.0:
   dependencies:
     has-flag "^4.0.0"
 
+svg@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/svg/-/svg-0.1.0.tgz#e934fcb55b796b818aa889aafee3ece3a09e6f90"
+  integrity sha1-6TT8tVt5a4GKqImq/uPs46Ceb5A=
+
 tapable@^1.1.3:
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/tapable/-/tapable-1.1.3.tgz#a1fccc06b58db61fd7a45da2da44f5f3a3e67ba2"
