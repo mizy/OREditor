@@ -34,9 +34,9 @@ class Page{
 
     init(){
         this.initDOM();
+        this.renderer = new Renderer(this);
         this.cursor = new Cursor(this);
         this.measure = new Measure(this);
-        this.renderer = new Renderer(this);
         this.initData(testData);
     }
 

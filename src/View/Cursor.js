@@ -1,8 +1,7 @@
 
 class Cursor{
-    x=0;
-    y=0;
     isFocus = true;
+    height=20;
     constructor(page){
         this.page = page;
         this.option = page.option;
@@ -91,11 +90,13 @@ class Cursor{
         // })
     }
     
-    moveTo({x,y}){
+    moveTo({x,y,textHeight=0,height}){
         const {renderer} = this.page;
         this.x = x + renderer.x;
-        this.y = y + renderer.y;
+        this.y = y + renderer.y - textHeight;
+        this.height = height;
         this.update();
+        this.focus();
     }
 
     /**
@@ -123,9 +124,11 @@ class Cursor{
         if(!res){
             res = children[children.length-1].findPosition(x,y);  
         }
-        this.x = res.x;
-        this.y = res.y;
+        this.x = res.x + renderer.x;
+        this.y = res.y + renderer.y;
+        this.height = res.height
         this.update();
+        this.focus();
     }
 
     focus(){
@@ -133,6 +136,7 @@ class Cursor{
     }
 
     update(){
+        this.dom.style.height = this.height + 'px';
         this.dom.style.transform = `translate(${this.x}px,${this.y}px)`;
     }
 }

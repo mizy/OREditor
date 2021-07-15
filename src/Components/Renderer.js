@@ -47,7 +47,8 @@ class Renderer{
             this.children.push(instance)
         });
         // 默认到初始化位置
-        this.page.cursor.moveTo(this.children[0].getPositionByIndex(0))
+        this.page.cursor.moveTo(this.children[0].children[0].getPositionByIndex(0));
+        this.activeComponent = this.children[0].children[0];
     } 
     
     createElementNS(tag,ns){

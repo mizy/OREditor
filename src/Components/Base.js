@@ -12,11 +12,9 @@ class Base{
     }
 
     getPositionByIndex(index){
-        const bbox = this.getBBox();
-        this.rect = bbox;
         return {
             x:this.globalPos.x,
-            y:this.globalPos.y - bbox.height
+            y:this.globalPos.y
         }
     }
 }

@@ -11,16 +11,18 @@ class Span extends Base{
         this.page = this.renderer.page;
         this.style = Object.assign({
             fontSize:14,
-            lineSpace:4,
+            lineSpace:0,
             textSpace:1
         },data.style);
         this.data = data.data;
         const {fontSize=14,textSpace} = this.style;
 
-        this.lineHeight = this.page.measure.getSizeHeight(fontSize);
+        this.lineHeight = this.page.measure.getBBoxHeight(fontSize);
+        this.fontSizeHeight = this.page.measure.getSizeHeight(fontSize);
+        this.disY = (this.lineHeight - fontSize)/2;
         if(!globalPos){
             globalPos = {...this.parent.globalPos};
-            globalPos.y +=  this.lineHeight;
+            globalPos.y +=  this.fontSizeHeight;
         }else{
             globalPos.x += textSpace
         }
@@ -36,36 +38,55 @@ class Span extends Base{
     }
 
     getPositionByIndex(index){
-        const {fontSize} = this.style.fontSize;
+        const pos = this.indexMap[index];
         return {
-            x:this.globalPos.x,
-            y:this.globalPos.y - fontSize
-        }
+            ...pos,
+            height:this.lineHeight,
+            textHeight:this.fontSizeHeight
+        };
     }
 
     findPosition(x,y){
         const {paths,textHeights} = this;
-        for(let i =0 ;i<textHeights;i++){
+        this.index = 0;
+        for(let i =0 ;i<textHeights.length;i++){
             if(y<textHeights[i]){
-                let finalX = paths[i].find(coord=>{
+                let finalX,beforeX,j=0;
+                for(j = 0;j<paths[i].length;j++){
+                    let coord = paths[i][j]
                     if(coord>x){
-                        return coord
+                        finalX = coord;
+                        beforeX = paths[i][j-1];
+                        break;
                     }
-                });
-                if(!finalX){
-                    finalX = paths[paths.length-1];
+                };
+                if(beforeX!==undefined){
+                    const middle = (beforeX+finalX)/2;
+                    if(x<middle){
+                        finalX = beforeX;
+                        j--;
+                    }
                 }
-                const finalY = textHeights[i];
+                this.index += j;
+                const finalY = textHeights[i]  - this.fontSizeHeight;
                 return {
                     x:finalX,
-                    y:finalY
-                };
+                    y:finalY,
+                    height:this.lineHeight
+                }
             }
+            this.index += paths[i].length;
+        }
+        return {
+            x:paths[0][0],
+            y:textHeights[0] - this.fontSizeHeight,
+            height:this.lineHeight,
         }
         // if(y<rect.top||y>rect.bottom)
     }
 
     update(){
+        this.indexMap = {};
         this.text.textContent = this.data;
         const {measure,option:{padding}} = this.page;
         const {fontSize=14,textSpace,lineSpace} = this.style;
@@ -87,6 +108,10 @@ class Span extends Base{
         let chars = [];
         let hasWrapped = false;//标识当前字母串是否已经换过行
         strs.forEach((str,i)=>{
+            this.indexMap[i] = {
+                x,
+                y:textHeights[textHeights.length-1]
+            };
             let width = fontSize;
             if(escape(str).startsWith("%u")){//汉字时，重置字符串状态
                 chars = [];
@@ -126,11 +151,12 @@ class Span extends Base{
             paths[lineNum].push(x);
         });
         paths.forEach((path,lineNum)=>{
+            // path.pop();
             path.forEach(x=>{
                 xStr += `${parseFloat(x.toFixed(2))} `;
                 yStr += `${parseFloat(textHeights[lineNum].toFixed(2))} `;
             })
-        }) 
+        }); 
         this.paths = paths;
         this.textHeights = textHeights;
         this.text.setAttribute('x',xStr);
@@ -138,11 +164,11 @@ class Span extends Base{
 
         this.getBBox();
     }
-
+ 
     getBBox(){
         const rect = {
             x:this.globalPos.x,
-            y:this.globalPos.y
+            y:this.globalPos.y,
         };
         this.rect = rect;
         rect.endX = this.paths.slice(-1)[0].slice(-1)[0];

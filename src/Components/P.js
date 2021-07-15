@@ -42,12 +42,18 @@ class P extends Base{
         })
     }
 
+    // 获取的位置
+    getPositionByIndex(index=0){
+        const child = this.children[index];
+        return child.getPositionByIndex(index);
+    }
+
     findPosition(x,y){
         const child = this.findClosetChild(x,y);
         // 所有的子元素中都没有找到最近的，就默认变成段落的第一个
         let res = child.findPosition(x,y);
         return res;
-    }v
+    }
 
     findClosetChild(x,y){
         const {children} = this;
@@ -101,7 +107,7 @@ class P extends Base{
     update(){
         this.bbox = this.dom.getBBox();
         this.rect = {
-            ...this.globalPos.x,
+            ...this.globalPos,
             endX :this.globalPos.x+this.bbox.width,
             endY :this.globalPos.y+this.bbox.height
         }
