@@ -13,13 +13,19 @@ class Renderer{
     }
 
     initDOM(){
-        const {offset,width} = this.page.option;
-        this.x = offset.x;
-        this.y = offset.y;
-        this.width = width - 2*offset.x;
+        const {padding,width} = this.page.option;
+        this.x = padding.x;
+        this.y = padding.y;
+        this.width = width - 2*this.x;
         this.g = this.createElementNS("g");
-        this.g.setAttribute("transform",`translate(${offset.x},${offset.y})`)
+        this.g.setAttribute("transform",`translate(${this.x},${this.y})`)
         this.page.svg.appendChild(this.g);
+        this.initTestDOM();
+    }
+
+    initTestDOM(){
+        this.g.append(this.$(`<g><path stroke-width="1" stroke="red" d="M0 0 L560 0"></path>
+        <path stroke="red" stroke-width="1" d="M0 0 L0 560"></path></g>`))
     }
 
     /**

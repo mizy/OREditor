@@ -6,8 +6,8 @@ class Cursor{
     constructor(page){
         this.page = page;
         this.option = page.option;
-        this.x = this.option.offset.x;
-        this.y = this.option.offset.y;
+        this.x = this.option.padding.x;
+        this.y = this.option.padding.y;
         this.init();
     }
 

@@ -10,11 +10,12 @@ class OREditor {
         this.container = container;
         this.option = Object.assign({
             height:600,
-            offset:{
-                x:20,y:40
+            padding:{
+                x:20,y:20
             }
         },option);
         this.init();
+        window.editor = this;
     }
     
     init(){
