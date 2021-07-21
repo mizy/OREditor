@@ -17,5 +17,16 @@ class Base{
             y:this.globalPos.y
         }
     }
+
+
+    splitChar(){
+        
+    }
+    delete(){
+        this.destroy();
+    }
+
+    destroy(){}
+
 }
 export default Base;
