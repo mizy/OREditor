@@ -6,7 +6,6 @@ import * as components from './index'
 class Renderer{
     activeComponent = undefined
     children = [];
-    fontRectCache = {}
     constructor(page){
         this.page = page;
         this.initDOM();
@@ -47,8 +46,16 @@ class Renderer{
             this.children.push(instance)
         });
         // 默认到初始化位置
-        this.page.cursor.moveTo(this.children[0].children[0].getPositionByIndex(0));
-        this.activeComponent = this.children[0].children[0];
+        this.children.forEach((item,index)=>{
+            const prev = this.children[index-1];
+            const next = this.children[index+1];
+            item.prev = prev;
+            item.next = next;
+        });
+        this.headChild = this.children[0];
+        this.activeComponent = this.headChild.headChild;
+        this.activeComponent.index = 0;
+        this.page.cursor.relocate();
     } 
     
     createElementNS(tag,ns){
@@ -86,10 +93,26 @@ class Renderer{
         this.page.svgDoc.importNode(node, true);
         return node
     }
-
-    findComponentByXY(){
-
-    }   
     
+    findPosition(x,y){
+        const {children} = this;
+        let res;
+        for(let i = 0 ;i<children.length;i++){
+            const child = children[i];
+            const {rect,bbox} = child;
+            if(!rect)continue;
+            if(y<(bbox.y+bbox.height)){
+                res = child.findPosition(x,y);
+                break;
+            }
+        }
+        if(!res){
+            res = children[children.length-1].findPosition(x,y);  
+        }
+        this.activeComponent = res.component;
+        return res;
+    }
+
+
 }
 export default Renderer;

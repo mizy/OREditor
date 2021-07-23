@@ -5,6 +5,7 @@ import * as components from './index'
  * @class
  */
 class P extends Base{
+    // 至少有一个
     children=[];
     constructor(data,renderer,globalPos){
         super();
@@ -28,18 +29,30 @@ class P extends Base{
     initChildren(){
         const {children} = this.data;
         this.textHeights = [];
-        let nowXY;
-        children.forEach(child=>{
+        let prev;
+        const getNext= (i)=>{
+            const child = children[i];
+            if(!child)return false;
             const Comp = components[child.type];
             const instance = new Comp({
                 data:child,
                 parent:this,
-                globalPos:nowXY
+                prev,
             });
-            const {rect} = instance;
-            nowXY = {x:rect.endX,y:rect.endY};
-            this.children.push(instance)
-        })
+            prev = instance;
+            //上面的优先
+            this.children.push(instance);
+            instance.next = getNext(++i);
+            return instance;
+        }
+        //链表头渲染,这里至少会有一个，不能是空容器
+        this.headChild = getNext(0);
+        this.headChild.update();
+    }
+
+    removeChild(child){
+       const index =  this.children.indexOf(child);
+       this.children.splice(index,1)
     }
 
     // 获取的位置
@@ -55,53 +68,97 @@ class P extends Base{
         return res;
     }
 
+    isInside(child,x,y){
+        const {rect,lineHeight,bbox} = child
+        const lastY = bbox.y+bbox.height - lineHeight;
+        const right = bbox.x + bbox.width;
+        if( (y<rect.y&&x>rect.x&&x<right)
+        || (y>=rect.y&&y<lastY)
+        || (y>lastY&&y<=rect.endY&&x<rect.endX)){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    getDis(child,x,y){
+        let {rect,textHeights,bbox,lineHeight,fontSizeHeight} = child;
+        if(this.isInside(child,x,y)){
+            return  -1;
+        }
+        const rects = [];
+        if(textHeights.length>1){
+            rects.push({
+                left:rect.x,
+                right:this.rect.endX,
+                top:bbox.y,
+                bottom:rect.y
+            },{
+                left:this.rect.x,
+                right:this.rect.endX,
+                top:rect.y,
+                bottom:rect.endY - fontSizeHeight
+            },{
+                left:this.rect.x,
+                right:rect.endX,
+                top:rect.endY - fontSizeHeight,
+                bottom:rect.endY
+            })
+        }else{
+            rects.push({
+                left:bbox.x,
+                right:rect.endX,
+                top:bbox.y,
+                bottom:bbox.y+bbox.height
+            })
+        }
+        let minDis = Infinity;
+        rects.forEach(item=>{
+            let dis;
+            if(y<=item.top){
+                if(x<item.left){
+                    dis = Math.sqrt(Math.pow(x-item.left,2)+Math.pow(y-item.top,2));
+                }else if(x>item.right){
+                    dis = Math.sqrt(Math.pow(x-item.right,2)+Math.pow(y-item.top,2));
+                }else{
+                    dis = item.top-y
+                }
+            }else if(y>=item.bottom){
+                if(x<item.left){
+                    dis = Math.sqrt(Math.pow(x-item.left,2)+Math.pow(y-item.bottom,2));
+                }else if(x>item.right){
+                    dis = Math.sqrt(Math.pow(x-item.right,2)+Math.pow(y-item.bottom,2));
+                }else{
+                    dis = y-item.bottom
+                }
+            }else if(x<=item.left){
+                dis = item.left - x;
+            }else{
+                dis = x - item.left;
+            }
+            minDis = Math.min(minDis,dis);
+        })
+        return minDis;
+    }
+
     findClosetChild(x,y){
         const {children} = this;
         const inHeightChildren = [];
-        // 先检索出在高度范围内的所有子元素
-        children.forEach(child=>{
-            const {bbox} = child;
-            if(y>bbox.y&&y<(bbox.y+bbox.height)){
-                inHeightChildren.push(child);
+        let min = Infinity;
+        let minChild;
+        // 先检索出在范围内的所有子元素
+        for(let i =0;i<children.length;i++){
+            const child = children[i];
+            const minDis = this.getDis(child,x,y);
+            if(minDis===-1){//内部直接返回
+                return child;
             }
-        });
-        if(!inHeightChildren[0]){
-            return children[0]
-        }
-        const innerChildren = []
-        inHeightChildren.forEach(child=>{
-            const {bbox} = child;
-            if(x>bbox.x&&x<(bbox.x+bbox.width)){
-                innerChildren.push(child)
+            if(minDis<min){
+                min = minDis;
+                minChild = child;
             }
-        })
-        //没有在内部的则取第一个高度符合的
-        if(!innerChildren.length){
-            return inHeightChildren[0]
         }
-        let final;
-        
-        innerChildren.find(child=>{
-            const {rect,textHeights} = child;
-            if(rect.y === rect.endY){
-                if(x<rect.endX&&x>rect.x){
-                    final = child;
-                    return true;
-                }
-            }else{
-                const lastY = this.rect.endY - textHeights.slice(-1)[0];
-                if( (y<rect.y&&x>rect.x&&x<this.rect.endX)
-                || (y>=rect.y&&y>=rect.y&&y<lastY)
-                || (y>=rect.y&&y>=lastY&&y<this.rect.endY)){
-                    final = child;
-                    return true;
-                }
-            }
-        })
-        if(!final){
-            return innerChildren[0]
-        }
-        return final;
+        return minChild;
     }
 
     update(){

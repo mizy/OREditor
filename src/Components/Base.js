@@ -1,9 +1,6 @@
 class Base{
 
-    globalPos={
-        x:0,
-        y:0
-    }
+    globalPos=undefined
     getBBox(){
         if(this.data===this.cacheData)return this.cacheBBox;
         this.cacheData = this.data;
@@ -18,9 +15,18 @@ class Base{
         }
     }
 
+    getPrev(){
+        if(this.prev){
+            return this.prev;
+        }
+        if(this.parent.prev){
+            return this.parent.prev.children[0]
+        }
+        return false
+    }
 
     splitChar(){
-        
+
     }
     delete(){
         this.destroy();

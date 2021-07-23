@@ -2,7 +2,8 @@
  * @author mizy
  * @see https://github.com/mizy/OREditor
  */
-import Page from './View/Page'
+import Page from './View/Page';
+import Keyboard from './Controller/Keyboard'
 
 import './index.less'
 class OREditor {
@@ -21,6 +22,7 @@ class OREditor {
     init(){
         this.initDOM();
         this.page = new Page(this);
+        this.keyboard = new Keyboard(this);
         requestAnimationFrame(()=>{
             this.resize();
         })
@@ -48,8 +50,14 @@ class OREditor {
     }
 
     addEvent(){
-        this.dom.addEventListener('click',(event)=>{
-            this.page.cursor.locate(event)
+        this.dom.addEventListener('mousedown',(event)=>{
+            this.timestemp = event.timeStamp; 
+        })
+        this.dom.addEventListener('mouseup',(event)=>{
+            const nowTime = event.timeStamp;
+            if(nowTime-this.timestemp<200){
+                this.page.cursor.locate(event)
+            }
         })
     }
 }

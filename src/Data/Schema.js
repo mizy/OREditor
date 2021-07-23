@@ -1,14 +1,11 @@
 
 class Schema{
-    
-    data = []
-
+    history =[]
     constructor(editor){
         this.editor = editor;
     }
-
-    setData(data){
-        
+    pushAction(action){
+        this.history.push(action);
     }
 }
 export default Schema;
