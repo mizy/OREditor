@@ -4,6 +4,7 @@ import Base from './Base';
  * @class
  */
 class Span extends Base{
+
     //tips: 尽量不要再初始化的过程中进行数据相关操作，否则类的操控会太过自动化，难以操控，尽量保持专职专能
     constructor({data,parent,prev,next}){
         super();
@@ -14,17 +15,21 @@ class Span extends Base{
         this.next = next;//双向链表
         this.style = Object.assign({
             fontSize:14,
-            lineSpace:5,
+            lineSpace:10,
             textSpace:0
         },data.style);
         this.data = data.data;
-        const {fontSize=14} = this.style;
-
-        this.lineHeight = this.page.measure.getBBoxHeight(fontSize);
-        this.fontSizeHeight = this.page.measure.getSizeHeight(fontSize);
-        this.disY = (this.lineHeight - fontSize)/2;
+        this.initFontHeight();
         this.initDOM();
     } 
+    
+    initFontHeight(){
+        const {fontSize=14} = this.style;
+        const textMatric =  this.page.measure.getSizeHeight(fontSize)
+        this.lineHeight = textMatric.fontBoundingBoxAscent + textMatric.fontBoundingBoxDescent + this.style.lineSpace;
+        this.fontSizeHeight = textMatric.fontBoundingBoxAscent;
+        this.disY = this.style.lineSpace/2;
+    }
 
     initDOM(){
         this.text = this.renderer.createElementNS('text');
@@ -33,7 +38,8 @@ class Span extends Base{
         this.text.classList.add('ore-span');
     }
 
-    getPositionByIndex(index){
+    //获取指定索引字符的起始位置
+    getPositionByIndex(index=this.index){
         // 若该组件已经没有任何字符串时，位置取根位置
         let pos = this.indexMap[index]||{
             x:this.globalPos.x,
@@ -43,19 +49,28 @@ class Span extends Base{
         return {
             x:pos.x,
             y:pos.y- this.fontSizeHeight,
+            originY:pos.y,
             height:this.lineHeight,
             component:this,
             textHeight:this.fontSizeHeight
         };
     }
 
+    /**
+     * 定位并且记录下当前的行数和指针位置
+     * @param {number} x 
+     * @param {number} y 
+     * @returns 
+     */
     findPosition(x,y){
         const {paths,textHeights} = this;
         this.index = 0;
         for(let i =0 ;i<textHeights.length;i++){
+            const bottomY = this.parent.lineHeight[this.startLineNum+i].bottomY;
             //y在组件上方，或者到最后都没有
-            if(y<textHeights[i]||i===textHeights.length-1){
+            if(y<bottomY||i===textHeights.length-1){
                 let finalX,beforeX,j=0;
+                // 查找前一个坐标和后一个坐标
                 for(j = 0;j<paths[i].length;j++){
                     let coord = paths[i][j]
                     if(coord>x){
@@ -64,18 +79,22 @@ class Span extends Base{
                         break;
                     }
                 };
+                if(finalX===undefined){//没有末尾坐标,说明是结尾，要构建前一个坐标和当前坐标
+                    beforeX = paths[i][j-1];
+                    finalX = paths[i].slice(-1)[0] + this.getFontWidth(this.data[this.index + j - 1])
+                }
+                // 前一个坐标存在则判断中点来定位指针是否-1
                 if(beforeX!==undefined){
                     const middle = (beforeX+finalX)/2;
-                    if(x<middle){
+                    if(x<middle||beforeX===finalX){
                         finalX = beforeX;
                         j--;
                     }
                 }
-                if(j>-1)this.index += j;
-                const finalY = textHeights[i]  - this.fontSizeHeight;
-                if(finalX===undefined){//没有finalX说明在组件的右上方
-                    finalX = paths[i].slice(-1)[0] + this.getFontWidth(this.data[this.index])
-                }
+                this.index += j;
+                this.nowLine = this.startLineNum+i;
+                const finalY = textHeights[i]  - this.fontSizeHeight - this.disY ;
+            
                 return {
                     x:finalX,
                     y:finalY,
@@ -85,41 +104,70 @@ class Span extends Base{
             }
             this.index += paths[i].length;
         }
-        
+        this.nowLine = this.endLineNum;
         return {
             x:paths[0][0],
-            y:textHeights[0] - this.fontSizeHeight,
+            y:textHeights[0] - this.fontSizeHeight ,
             height:this.lineHeight,
             component:this
         }
     }
 
     /**
-     * 重新计算当前组件左上角的绝对坐标，如果么有前置组件，则为父组件的坐标+字高
+     * 重新计算当前组件左上角的绝对坐标，和当前行的坐标如果么有前置组件，则为父组件的坐标+字高
      */
     calcGlobalPos(){
         let globalPos;
+        
            // 有前置的情况
         if(this.prev){
             const {fontSize,textSpace} = this.style;
             const {rect} = this.prev;
-            const prevSize = this.prev.style.fontSize;
-            globalPos = {x:rect.endX,y:rect.endY};      
-             // 字高毕竟大撑开当前行
-            if(fontSize>prevSize){
+            let lineNum = this.prev.endLineNum;
+            const highComponent = this.parent.lineHeight[lineNum]?.component;
+            //这里取前置的当前行最大组件
+            const prevSize = highComponent.style.fontSize;
+            globalPos = {x:rect.endX,y:rect.endY};
+            const firstStrWidth = this.getFontWidth(this.data[0]); 
+            // 要换行的情况
+            if(globalPos.x + firstStrWidth>this.parent.rightGap){
+                lineNum++;
+                globalPos = {x:this.parent.rect.x,y:rect.endY+this.lineHeight};
+                this.parent.lineHeight[lineNum] = {
+                    component:this,
+                    topY:globalPos.y - this.fontSizeHeight - this.disY,
+                    bottomY:globalPos.y - this.fontSizeHeight - this.disY + this.lineHeight
+                };
+            }else if(fontSize>prevSize){//不换行的情况
+                let topY = this.parent.lineHeight[lineNum-1]?.bottomY||0;
                 let beforeY = globalPos.y;
-                globalPos.y  += this.fontSizeHeight - this.prev.fontSizeHeight;
-                this.prev.onLineFontSizeChange(beforeY,globalPos.y)
+                globalPos.y  = topY + this.disY + this.fontSizeHeight;
+                this.prev.onLineFontSizeChange(beforeY,globalPos.y,this);
+                 // 更改记录当前行的最大高度
+                this.parent.lineHeight[lineNum] = {
+                    component:this,
+                    topY,
+                    bottomY:topY + this.lineHeight 
+                };
             }
+            this.startLineNum = lineNum;
             globalPos.x += textSpace;
         }else{// 无前置的情况坐标要从parent取
             globalPos = {...this.parent.globalPos};
-            globalPos.y +=  this.fontSizeHeight;
+            globalPos.y += this.disY + this.fontSizeHeight;
+            // 第一行
+            this.parent.lineHeight[0] = {
+                component:this,
+                topY:this.parent.globalPos.y,
+                bottomY:this.parent.globalPos.y + this.lineHeight
+            };
+            this.startLineNum = 0;
         }
         this.globalPos = globalPos
     } 
 
     getFontWidth(str){
+        if(str===undefined)return 0;
         let width = this.style.fontSize;
         if(escape(str).startsWith("%u")){//汉字时，重置字符串状态
         }else if(str===' '){//空格也要重新计算英文
@@ -128,6 +176,11 @@ class Span extends Base{
             width = this.page.measure.measure(str,this.style.fontSize);
         }
         return width
+    }
+
+    //渲染当前行的头
+    updateHead(){
+        this.getStartLineHead().update();
     }
 
     /**
@@ -139,8 +192,8 @@ class Span extends Base{
         this.calcGlobalPos();
 
         const {measure,option:{padding}} = this.page;
-        const {fontSize=14,textSpace,lineSpace} = this.style;
-        const rightGap = this.renderer.width;
+        const {fontSize=14,textSpace} = this.style;
+        const rightGap = this.parent.rightGap;
        
         //该组件每行高度
         // 字高，用来向上偏移
@@ -173,10 +226,14 @@ class Span extends Base{
             x += width + textSpace;
             if(x>rightGap){
                 x = 0;
-                y += this.lineHeight+lineSpace;
+                // 这里应该是取当前行最大组件的行高
+                if(textHeights.length===1){
+                    y = this.parent.lineHeight[this.startLineNum].bottomY + this.disY + this.fontSizeHeight;
+                }else{
+                    y += this.lineHeight ;
+                }
                 textHeights.push(y);
                 if(chars.length&&!hasWrapped){//英文没换过行则需要出栈队列里的所有字母
-                    hasWrapped = true;
                     const beforePos = paths[lineNum].splice(paths[lineNum].length - chars.length,chars.length);
                     const firstPos = beforePos[0];
                     lineNum++;
@@ -194,17 +251,34 @@ class Span extends Base{
                     x = width+textSpace;
                 }
             }
+            
             paths[lineNum].push(x);
         });
+        this.endLineNum = this.startLineNum + textHeights.length - 1;
         this.paths = paths;
         this.textHeights = textHeights;
+        this.updateParentLineHeight();
         this.updatePaths();
         // 链式渲染
-        this.next&&this.next.update(true);
+        if(this.next){
+            this.next.update(true);
+        }else{
+            this.parent.afterUpdate()
+        }
+    }
+
+    updateParentLineHeight(){
+        for(let i = 1;i<this.textHeights.length;i++){
+            this.parent.lineHeight[this.startLineNum+i] = {
+                component:this,
+                topY:this.textHeights[i] - this.fontSizeHeight - this.disY,
+                bottomY:this.textHeights[i] - this.fontSizeHeight - this.disY + this.lineHeight,
+            }
+        }
     }
 
     updatePaths(){
-        this.indexMap = {}
+        this.indexMap = []
         let i = 0;
         let xStr = '',yStr = '';
         /**
@@ -212,12 +286,14 @@ class Span extends Base{
          */
         this.renderStr = '';
         this.paths.forEach((path,lineNum)=>{
+            
             // path.pop();
-            path.forEach(x=>{
+            path.forEach((x,index)=>{
                 this.indexMap[i] = {
                     x,
                     y:this.textHeights[lineNum]
                 };
+                // ||index===path.length-1 不用把最后一个坐标去掉吧
                 if(this.data[i] ===' '){
                     i++;
                     return false;//空格跳过
@@ -242,6 +318,9 @@ class Span extends Base{
         this.rect = rect;
         rect.endX = this.paths.slice(-1)[0].slice(-1)[0];
         rect.endY = this.textHeights.slice(-1)[0];
+        if(this.textHeights.length===1){
+            rect.y = rect.endY;
+        }
         this.bbox = this.text.getBBox();
         return rect;
     }
@@ -251,11 +330,15 @@ class Span extends Base{
         const lastY  = this.textHeights[this.textHeights.length-1]
         if(lastY>=beforeY){
             this.textHeights[this.textHeights.length-1] = nowY;
+            if(this.textHeights.length===1){//只有一行的情况，组件的全局坐标也给他改咯
+                this.globalPos.y = nowY;
+            }
+            this.updatePaths();
+            if(this.prev){
+                this.prev.onLineFontSizeChange(beforeY,nowY)
+            }
         }
-        this.updatePaths();
-        if(this.prev){
-            this.prev.onLineFontSizeChange(beforeY,nowY)
-        }
+        
     }
 
     /**
@@ -284,6 +367,14 @@ class Span extends Base{
         return oldStr;
     }
 
+    getStartLineHead(){
+        let lineHead = this;
+        while(lineHead.prev&&lineHead.prev.endLineNum===this.startLineNum){
+            lineHead = lineHead.prev;
+        };
+        return lineHead;
+    }
+
     destroy(){
         //cursor重指向
         if(this.renderer.activeComponent){
@@ -306,8 +397,10 @@ class Span extends Base{
             this.next.prev = this.prev;
         }
         this.text.remove();
-        this.next.update();
-        this.parent.removeChild(this)
+        // 简单粗暴不进行最优渲染，直接渲染当前段落，后续可以优化为值渲染当前行
+        this.parent.removeChild(this);
+        this.parent.lineHeight = {};
+        this.parent.headChild.update();
         for(let key in this){
             this[key] = undefined;
         }

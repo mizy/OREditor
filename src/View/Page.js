@@ -3,14 +3,21 @@ import Cursor from "./Cursor";
 import Measure from '../Utils/Measure';
 import Renderer from '../Components/Renderer';
 import Schema from "../Data/Schema";
+import Section from '../Controller/Section';
 const testData = [{
     type:"p",
     children:[{
         style:{
-            fontSize:32,
+            fontSize:14,
         },
         type:"span",
         data:'我 是'
+    },{
+        style:{
+            fontSize:32,
+        },
+        type:"span",
+        data:'是'
     },{
         style:{
             fontSize:12,
@@ -18,9 +25,15 @@ const testData = [{
         type:"span",
         data:'GraphQL 带来的最大好处是精简请求响应内容，不会出现冗余字段，前端可以textabc后端返回什么数据。但要注意的是，前端的决定权取决于后端支持什么数据，因此 GraphQL 更像是精简了返回值的 REST，而后端接口也可以一次性定义完所有功能，而不需要逐个开发。'
     }]
+},{
+    type:"p",
+    children:[{
+        type:"span",
+        data:"第二行的文本"
+    }]
 }];
 let str = '';
-let i = 1000;
+let i = 100;
 while(i>0){
     str+='发'
     i--;
@@ -43,6 +56,7 @@ class Page{
         this.cursor = new Cursor(this);
         this.measure = new Measure(this);
         this.schema = new Schema(this);
+        this.section = new Section(this);
         this.initData(testData);
     }
 
@@ -75,7 +89,7 @@ class Page{
         height += 2*this.option.padding.y;
         this.dom.style.height = height+'px';
         this.rect = this.dom.getBoundingClientRect();
-        this.svg.setAttribute("height",height)
+        this.svg.setAttribute("height",height);
     }
 
     addEvents(){

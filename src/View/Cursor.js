@@ -73,12 +73,8 @@ class Cursor{
         this.focus();
     }
 
-    /**
-     * 根据事件坐标 - Page的屏幕坐标 - 偏移获取画布坐标系的坐标
-     * @param {MouseEvent} event 
-     */
-     locate(event){
-        const {rect,renderer} = this.page;
+    getGlobalXY(event){
+        const {rect,renderer} = this.page; 
         let {offsetX,offsetY,target} = event;
         let  disX = 0;let disY = 0;
         while(target!==this.page.editor.dom){
@@ -88,11 +84,23 @@ class Cursor{
             }
             target = target.parentElement;
         }
-        //获取到画布坐标系的坐标
+         //获取到画布坐标系的坐标
         const x = offsetX + disX - rect.x - renderer.x;
         const y = offsetY + disY - rect.y - renderer.y;
+        return {
+            x,
+            y
+        }
+    }
 
-        const res = renderer.findPosition(x,y);
+    /**
+     * 根据事件坐标 - Page的屏幕坐标 - 偏移获取画布坐标系的坐标
+     * @param {MouseEvent} event 
+     */
+     locate(event){
+        const {rect,renderer} = this.page; 
+        const {x,y} = this.getGlobalXY(event);
+        const res = renderer.findPosition(x,y); 
         this.x = res.x + renderer.x;
         this.y = res.y + renderer.y;
         this.height = res.height;
@@ -112,6 +120,14 @@ class Cursor{
 
     focus(){
         this.dom.focus();
+    }
+
+    hide(){
+        this.dom.style.display = 'none';
+    }
+
+    show(){
+        this.dom.style.display = 'block';
     }
 
     update(){

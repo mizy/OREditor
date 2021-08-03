@@ -7,6 +7,7 @@ import * as components from './index'
 class P extends Base{
     // 至少有一个
     children=[];
+    lineHeight = {};//这里定义个每行高的组件
     constructor(data,renderer,globalPos){
         super();
         this.renderer = renderer;
@@ -14,6 +15,8 @@ class P extends Base{
         this.style = data.style||{};
         this.data = data;
         this.globalPos = globalPos;
+        //右侧边界
+        this.rightGap = globalPos.x + renderer.width;
         this.init();
     }
 
@@ -22,7 +25,6 @@ class P extends Base{
         this.renderer.g.appendChild(this.dom);
         this.dom.classList.add('ore-p');
         this.initChildren();
-        this.update()
     }
 
     // 初始化子节点
@@ -47,7 +49,6 @@ class P extends Base{
         }
         //链表头渲染,这里至少会有一个，不能是空容器
         this.headChild = getNext(0);
-        this.headChild.update();
     }
 
     removeChild(child){
@@ -69,16 +70,22 @@ class P extends Base{
     }
 
     isInside(child,x,y){
-        const {rect,lineHeight,bbox} = child
-        const lastY = bbox.y+bbox.height - lineHeight;
+        const {rect,lineHeight,bbox} = child;
+        const topY = bbox.y;
+        const bottomY = bbox.y+bbox.height;
+        const top2Y = topY + lineHeight;
+        const bottom2Y = bottomY - lineHeight;
         const right = bbox.x + bbox.width;
-        if( (y<rect.y&&x>rect.x&&x<right)
-        || (y>=rect.y&&y<lastY)
-        || (y>lastY&&y<=rect.endY&&x<rect.endX)){
-            return true;
-        }else{
+        if(x>right||x<bbox.x||y>bottomY||y<topY){
             return false;
         }
+        if(y<top2Y&&x<rect.x){
+            return false
+        }
+        if(y>bottom2Y&&x>rect.endX){
+            return false
+        }
+        return true;
     }
 
     getDis(child,x,y){
@@ -87,29 +94,31 @@ class P extends Base{
             return  -1;
         }
         const rects = [];
+        const startLine = this.lineHeight[child.startLineNum];
+        const endLine = this.lineHeight[child.endLineNum];
         if(textHeights.length>1){
             rects.push({
                 left:rect.x,
-                right:this.rect.endX,
-                top:bbox.y,
-                bottom:rect.y
+                right:bbox.x+bbox.width,
+                top:startLine.topY,
+                bottom:startLine.bottomY
             },{
-                left:this.rect.x,
-                right:this.rect.endX,
-                top:rect.y,
-                bottom:rect.endY - fontSizeHeight
+                left:bbox.x,
+                right:bbox.x+bbox.width,
+                top:startLine.bottomY,
+                bottom:endLine.topY
             },{
-                left:this.rect.x,
+                left:bbox.x,
                 right:rect.endX,
-                top:rect.endY - fontSizeHeight,
-                bottom:rect.endY
+                top:endLine.topY,
+                bottom:endLine.bottomY
             })
         }else{
             rects.push({
                 left:bbox.x,
                 right:rect.endX,
-                top:bbox.y,
-                bottom:bbox.y+bbox.height
+                top:startLine.topY,
+                bottom:startLine.bottomY
             })
         }
         let minDis = Infinity;
@@ -134,7 +143,7 @@ class P extends Base{
             }else if(x<=item.left){
                 dis = item.left - x;
             }else{
-                dis = x - item.left;
+                dis = x - item.right;
             }
             minDis = Math.min(minDis,dis);
         })
@@ -161,12 +170,20 @@ class P extends Base{
         return minChild;
     }
 
+    // 根据上面的位置更新下面的
     update(){
+        this.headChild.update();
+    }
+
+    afterUpdate(){
         this.bbox = this.dom.getBBox();
         this.rect = {
             ...this.globalPos,
             endX :this.globalPos.x+this.bbox.width,
             endY :this.globalPos.y+this.bbox.height
+        };
+        if(this.next){
+            this.next.update();
         }
     }
 }

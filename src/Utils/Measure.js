@@ -1,5 +1,10 @@
+/**
+ * TODO: 这里以后要考虑不同字体，现在默认为arial
+ * @class
+ */
 class Measure{
     fontRectCache = {}
+    fontSizeCache = {}
     constructor(page){
         this.page = page;
         this.initDOM();
@@ -17,13 +22,17 @@ class Measure{
     }
 
     getSizeHeight(fontSize=14){
-        return fontSize+(fontSize>30?2:1)
+        if(this.fontSizeCache[fontSize]){
+            return this.fontSizeCache[fontSize];
+        };
+        this.ctx.font = `${fontSize}px arial,sans-serif`;
+        const textMatric = this.ctx.measureText('1');
+        this.fontSizeCache[fontSize] = textMatric;
+        return textMatric
     }
 
     getBBoxHeight(fontSize=14){
-        if(this.heigtsCache[fontSize]){
-            return this.heigtsCache[fontSize]
-        }
+        this.testSVG.style.fontFamily = `arial,sans-serif`;
         this.testSVG.style.fontSize = fontSize+"px";
         const bbox = this.testSVG.getBBox();
         this.heigtsCache[fontSize] = bbox.height;
@@ -42,6 +51,7 @@ class Measure{
         if(!fontRectCache[fontSize]){
             fontRectCache[fontSize] = {}
         }
+
         fontRectCache[fontSize][text] = parseFloat(textMatric.width.toFixed(1));
         return fontRectCache[fontSize][text];
     }

@@ -19,7 +19,8 @@ class Renderer{
         this.g = this.createElementNS("g");
         this.g.setAttribute("transform",`translate(${this.x},${this.y})`)
         this.page.svg.appendChild(this.g);
-        this.initTestDOM();
+        this.defs = this.createElementNS("defs");
+        this.page.svg.appendChild(this.defs);
     }
 
     initTestDOM(){
@@ -53,6 +54,7 @@ class Renderer{
             item.next = next;
         });
         this.headChild = this.children[0];
+        this.headChild.update();
         this.activeComponent = this.headChild.headChild;
         this.activeComponent.index = 0;
         this.page.cursor.relocate();
