@@ -64,10 +64,19 @@ class Section{
             x,
             y
         }
-        const startParent = this.startPos.component.parent;
-        const endParent = this.dragPos.component.parent;
+        this.updatePaths();
+        this.update();
+    }
+
+    updatePaths(){
+        let startParent = this.startPos.component.parent;
+        let endParent = this.dragPos.component.parent;
+        if(this.dragPos.x===this.startPos.x&&this.startPos.nowLine===this.dragPos.nowLine&&startParent===endParent){
+            this.paths = [];
+            return this.update();
+        }
         //当前行
-        if(this.dragPos.nowLine === this.startPos.nowLine){
+        if(this.dragPos.nowLine === this.startPos.nowLine && startParent===endParent){
             const topY = startParent.lineHeight[this.startPos.nowLine].topY;
             const bottomY = startParent.lineHeight[this.dragPos.nowLine].bottomY;
             this.paths = [ 
@@ -88,14 +97,22 @@ class Section{
                     y:bottomY
                 }
             ]
-            //非当前行
+        //非当前行
         }else{
-            let startPos = this.startPos.originY<this.dragPos.originY?this.startPos:this.dragPos;
-            let dragPos = this.startPos.originY<this.dragPos.originY?this.dragPos:this.startPos;
+            let startPos = this.startPos.y<=this.dragPos.y?this.startPos:this.dragPos;
+            let dragPos = this.startPos.y<=this.dragPos.y?this.dragPos:this.startPos;
+            if(this.startPos.originY===this.dragPos.originY&&this.dragPos.x<this.startPos.x){
+                startPos = this.dragPos;
+                dragPos = this.startPos
+            }
+
+            startParent = startPos.component.parent;
+            endParent = dragPos.component.parent;
             const firstTopY =   startParent.lineHeight[startPos.nowLine].topY;
             const firstBottomY =  startParent.lineHeight[startPos.nowLine].bottomY;
             const lastTopY =   endParent.lineHeight[dragPos.nowLine].topY;
             const lastBottomY =  endParent.lineHeight[dragPos.nowLine].bottomY;
+            const right = Math.max(startPos.component.parent.rect.endX,dragPos.component.parent.rect.endX)
             this.paths = [{
                 x:startPos.component.parent.rect.x,
                 y:firstBottomY
@@ -107,10 +124,10 @@ class Section{
                 x: startPos.x,
                 y:firstTopY
             },{
-                x: startPos.component.parent.rect.endX,
+                x: right,
                 y:firstTopY
             },{
-                x: startPos.component.parent.rect.endX,
+                x: right,
                 y: lastTopY
             },{
                 x: dragPos.x,
@@ -124,7 +141,45 @@ class Section{
             }]
 
         }
-        this.update();
+    }
+
+    getSelections(){
+        let startPos = this.startPos.y<=this.dragPos.y?this.startPos:this.dragPos;
+        let dragPos = this.startPos.y<=this.dragPos.y?this.dragPos:this.startPos;
+        if(this.startPos.nowLine===this.dragPos.nowLine&&this.dragPos.x<this.startPos.x){
+            startPos = this.dragPos;
+            dragPos = this.startPos
+        }
+        const startComponent = startPos.component;
+        const endComponent = dragPos.component;
+        let startP = startComponent.parent;
+        let endP = endComponent.parent;
+        let res = [];
+        let nowComponent = startComponent;
+        while(nowComponent&&nowComponent!==endComponent){
+            res.push(nowComponent);
+            nowComponent = nowComponent.next;
+        }
+        if(startP!==endP){
+            let nowP = startP.next;
+            while(nowP&&nowP!==endP){
+                res.push(nowP);
+                nowP = nowP.next;
+            }
+        }
+        if(startP!==endP){
+            nowComponent = endP.headChild;
+            while(nowComponent&&nowComponent!==endComponent){
+                res.push(nowComponent);
+                nowComponent = nowComponent.next
+            }
+        }
+        res.push(endComponent);
+        return {
+            selections:res,
+            startPos:startPos,
+            endPos:dragPos
+        }     
     }
 
     endDrag(event){
@@ -161,6 +216,7 @@ class Section{
         this.filterSVG.setAttribute("width",maxX - minX + 10);
         this.filterSVG.setAttribute("height",maxY - minY + 10);
         this.path.setAttribute("d",str);
+
     }
 }
 export default Section;

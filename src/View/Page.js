@@ -30,6 +30,22 @@ const testData = [{
     children:[{
         type:"span",
         data:"第二行的文本"
+    },{
+        type:"span",
+      
+        data:"第二行的文本大一点"
+    }]
+},{
+    type:"p",
+    children:[{
+        type:"span",
+        data:"第三行的文本"
+    },{
+        type:"span",
+        style:{
+            fontSize:18,
+        },
+        data:"第三行的文本大一点"
     }]
 }];
 let str = '';
@@ -53,10 +69,10 @@ class Page{
     init(){
         this.initDOM();
         this.renderer = new Renderer(this);
+        this.section = new Section(this);
         this.cursor = new Cursor(this);
         this.measure = new Measure(this);
         this.schema = new Schema(this);
-        this.section = new Section(this);
         this.initData(testData);
     }
 
@@ -67,7 +83,7 @@ class Page{
         this.dom = document.createElement('div');
         this.dom.classList.add("ore-page");
         this.dom.style.width  = this.option.width+'px';
-        this.dom.style.height = this.option.height + 'px';
+        // this.dom.style.height = this.option.height + 'px';
         this.container.appendChild(this.dom);
         this.svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
         this.svg.classList.add("ore-canvas");
@@ -86,7 +102,7 @@ class Page{
  
     resize(){
         let {height} = this.renderer.g.getBBox();
-        height += 2*this.option.padding.y;
+        height += 2*this.option.padding.y + 20;
         this.dom.style.height = height+'px';
         this.rect = this.dom.getBoundingClientRect();
         this.svg.setAttribute("height",height);

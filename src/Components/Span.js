@@ -4,7 +4,8 @@ import Base from './Base';
  * @class
  */
 class Span extends Base{
-
+    name="Span"
+    indexMap={}
     //tips: 尽量不要再初始化的过程中进行数据相关操作，否则类的操控会太过自动化，难以操控，尽量保持专职专能
     constructor({data,parent,prev,next}){
         super();
@@ -32,10 +33,15 @@ class Span extends Base{
     }
 
     initDOM(){
-        this.text = this.renderer.createElementNS('text');
-        this.parent.dom.appendChild(this.text);
-        this.text.setAttribute("font-size",this.style.fontSize)
-        this.text.classList.add('ore-span');
+        this.dom = this.renderer.createElementNS('text');
+        this.parent.dom.appendChild(this.dom);
+        this.dom.classList.add('ore-span');
+        this.updateStyle();
+    }
+
+    updateStyle(){
+        this.dom.setAttribute("font-size",this.style.fontSize);
+        this.dom.setAttribute("fill",this.style.color);
     }
 
     //获取指定索引字符的起始位置
@@ -48,7 +54,7 @@ class Span extends Base{
         
         return {
             x:pos.x,
-            y:pos.y- this.fontSizeHeight,
+            y:pos.y - this.fontSizeHeight - this.disY,
             originY:pos.y,
             height:this.lineHeight,
             component:this,
@@ -139,7 +145,7 @@ class Span extends Base{
                     bottomY:globalPos.y - this.fontSizeHeight - this.disY + this.lineHeight
                 };
             }else if(fontSize>prevSize){//不换行的情况
-                let topY = this.parent.lineHeight[lineNum-1]?.bottomY||0;
+                let topY = this.parent.lineHeight[lineNum].topY;
                 let beforeY = globalPos.y;
                 globalPos.y  = topY + this.disY + this.fontSizeHeight;
                 this.prev.onLineFontSizeChange(beforeY,globalPos.y,this);
@@ -163,7 +169,8 @@ class Span extends Base{
             };
             this.startLineNum = 0;
         }
-        this.globalPos = globalPos
+        this.globalPos = globalPos;
+        
     } 
 
     getFontWidth(str){
@@ -178,9 +185,8 @@ class Span extends Base{
         return width
     }
 
-    //渲染当前行的头
-    updateHead(){
-        this.getStartLineHead().update();
+    addData(data){
+        this.data += data;
     }
 
     /**
@@ -263,6 +269,7 @@ class Span extends Base{
         if(this.next){
             this.next.update(true);
         }else{
+            this.parent.lineHeight.splice(this.endLineNum+1,1)
             this.parent.afterUpdate()
         }
     }
@@ -278,7 +285,7 @@ class Span extends Base{
     }
 
     updatePaths(){
-        this.indexMap = []
+        this.indexMap = {}
         let i = 0;
         let xStr = '',yStr = '';
         /**
@@ -304,9 +311,9 @@ class Span extends Base{
                 yStr += `${parseFloat(this.textHeights[lineNum].toFixed(2))} `;
             })
         }); 
-        this.text.textContent = this.renderStr;
-        this.text.setAttribute('x',xStr);
-        this.text.setAttribute('y',yStr);
+        this.dom.textContent = this.renderStr;
+        this.dom.setAttribute('x',xStr);
+        this.dom.setAttribute('y',yStr);
         this.getBBox();
     }
  
@@ -321,7 +328,7 @@ class Span extends Base{
         if(this.textHeights.length===1){
             rect.y = rect.endY;
         }
-        this.bbox = this.text.getBBox();
+        this.bbox = this.dom.getBBox();
         return rect;
     }
 
@@ -348,9 +355,10 @@ class Span extends Base{
      * @returns 
      */
      spliceChar(index,number,str=""){
-         if(this.data.length===1&&number!==0){
+         if(index===0&&number>=this.data.length&&!str){
+             const oldStr = this.data;
             this.destroy();
-            return true;
+            return oldStr;
          }
         //新增情况
         if(number===0){
@@ -367,42 +375,34 @@ class Span extends Base{
         return oldStr;
     }
 
-    getStartLineHead(){
-        let lineHead = this;
-        while(lineHead.prev&&lineHead.prev.endLineNum===this.startLineNum){
-            lineHead = lineHead.prev;
-        };
-        return lineHead;
-    }
+   
 
-    destroy(){
-        //cursor重指向
-        if(this.renderer.activeComponent){
-            if(this.prev){
-                this.renderer.activeComponent = this.prev;
-                this.prev.index = this.prev.data.length;
-            }else if(this.next){
-                this.renderer.activeComponent = this.next;
-                this.next.index = 0;
-            }else{
-                return false;
-            }
-        }
-        
-        // 链表重连
-        if(this.prev){
-            this.prev.next = this.next;
-        }
-        if(this.next){
-            this.next.prev = this.prev;
-        }
-        this.text.remove();
-        // 简单粗暴不进行最优渲染，直接渲染当前段落，后续可以优化为值渲染当前行
-        this.parent.removeChild(this);
-        this.parent.lineHeight = {};
-        this.parent.headChild.update();
+    //清空
+    clear(){
+        this.dom.remove();
         for(let key in this){
             this[key] = undefined;
+        }
+        this.cleared = true
+    }
+
+    destroy(isRender=true){
+        // 简单粗暴不进行最优渲染，直接渲染当前段落，后续可以优化为值渲染当前行
+        this.parent.removeChild(this);
+        this.parent.lineHeight = [];
+        if(isRender){
+            this.parent.headChild.update();
+        }
+        this.clear();
+    }
+
+    toJSON(index){
+        return {
+            type:"span",
+            style:{
+                ...this.style
+            },
+            data:this.data
         }
     }
 }

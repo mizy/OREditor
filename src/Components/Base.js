@@ -19,10 +19,22 @@ class Base{
         if(this.prev){
             return this.prev;
         }
-        if(this.parent.prev){
-            return this.parent.prev.children[0]
-        }
+        
         return false
+    }
+
+    //渲染当前行的头
+    updateHead(){
+        this.getStartLineHead().update();
+    }
+
+    // 获取当前行的头
+    getStartLineHead(){
+        let lineHead = this;
+        while(lineHead.prev&&lineHead.prev.endLineNum===this.startLineNum){
+            lineHead = lineHead.prev;
+        };
+        return lineHead;
     }
 
     splitChar(){

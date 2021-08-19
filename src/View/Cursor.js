@@ -20,7 +20,7 @@ class Cursor{
     }
 
     addEvents(){
-        const {renderer} = this.page;
+        const {renderer,editor} = this.page;
         this.dom.addEventListener("blur",()=>{
             this.isFocus = true;
             this.dom.classList.add("blur")
@@ -34,17 +34,21 @@ class Cursor{
         let beforeLength = 0;
         this.dom.addEventListener("input",(e)=>{
             e.preventDefault();
-            if(!this.focus)return;
+            // if(!this.focus)return;
+            if(this.page.section.paths.length){//有选中时，先删除选中项
+                editor.keyboard.execute("Delete");
+                compositionIndex = renderer.activeComponent.index;
+            }
+            this.checkStyle();
             const text = this.dom.value;
+            const {activeComponent} = renderer;
 
             if(!this.composition&&text){
-                const {activeComponent} = renderer;
                 activeComponent.spliceChar(activeComponent.index,0,text);
                 this.relocate();
                 this.dom.value = '';
             }else{
                 //替换文字
-                const {activeComponent} = renderer;
                 activeComponent.spliceChar(compositionIndex,beforeLength,text);
                 activeComponent.index = compositionIndex+text.length;
                 beforeLength = text.length;
@@ -57,12 +61,59 @@ class Cursor{
         });
         this.dom.addEventListener("compositionend",(e)=>{
             this.composition = false;
-            console.log( this.dom.value);
             renderer.activeComponent.index = compositionIndex + this.dom.value.length;
             this.dom.value = '';
             beforeLength = 0;
             this.relocate();
         });
+    }
+
+    checkStyle(){
+        const {style} = this;
+        const {renderer} = this.page;
+        if(style){
+            const {activeComponent} = renderer;
+            const {index,parent,data,style:nowStyle} = activeComponent; 
+            let flag = true;
+            for(let key in style){
+                if(style[key]!==nowStyle[key]){
+                    flag = false;
+                }
+            }
+            if(flag){
+                return
+            }
+            const length = data.length;
+            const componentIndex = parent.children.indexOf(activeComponent); 
+            const spliceData = activeComponent.toJSON();
+            const nowData = {
+                style:{
+                    ...spliceData.style,
+                    ...style,
+                },
+                data:""
+            };
+            let now;
+            if(index===0){
+                now = parent.insertSpan(componentIndex,nowData);
+            }else if(index===length){
+                now = parent.insertSpan(componentIndex+1,nowData);
+            }else{
+                const spliceChar = activeComponent.spliceChar(index,activeComponent.data.length-index);
+                spliceData.data = spliceChar;
+                now = parent.insertSpan(componentIndex+1,nowData);
+                parent.insertSpan(componentIndex+2,spliceData);
+
+            }
+            renderer.activeComponent = now;
+            now.index = 0;
+            parent.update();//简单点
+        }
+    }
+
+    setStyle(style){
+        this.style = style;
+        this.focus();
     }
     
     moveTo({x,y,textHeight=0,height}){
@@ -123,16 +174,17 @@ class Cursor{
     }
 
     hide(){
-        this.dom.style.display = 'none';
+        this.dom.style.zIndex = '-1';
     }
 
     show(){
-        this.dom.style.display = 'block';
+        this.dom.style.zIndex = '1';
     }
 
     update(){
         const {renderer} = this.page;
         const {activeComponent} = renderer;
+        this.style = undefined;
         this.dom.style.height = activeComponent.lineHeight + 'px';
         this.dom.style.fontSize = activeComponent.fontSizeHeight + 'px';
         this.dom.style.transform = `translate(${this.x}px,${this.y}px)`;

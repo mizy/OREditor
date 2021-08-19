@@ -12,7 +12,7 @@ class OREditor {
         this.option = Object.assign({
             height:600,
             padding:{
-                x:20,y:20
+                x:20,y:10
             }
         },option);
         this.init();
@@ -54,7 +54,6 @@ class OREditor {
             this.timestemp = event.timeStamp; 
             this.startEvent = event;
             this.dom.addEventListener("mousemove",onMouseMove);
-
         })
         this.dom.addEventListener('mouseup',(event)=>{
             const nowTime = event.timeStamp;
@@ -63,12 +62,14 @@ class OREditor {
                 this.page.cursor.locate(event);
                 this.page.section.hide();
             }else{
-                this.page.section.endDrag(event)
+                this.page.section.endDrag(event);
+                // 选择范围也是一种鼠标选中
+                this.page.cursor.focus();
             }
             this.startEvent = undefined;
-            this.dom.removeEventListener("mousemove",onMouseMove)
+            this.dom.removeEventListener("mousemove",onMouseMove);
         })
-        this.dom.addEventListener('mouseleave',(event)=>{
+        document.addEventListener('mouseleave',(event)=>{
             this.dom.removeEventListener("mousemove",onMouseMove)
         })
         const onMouseMove = (event)=>{

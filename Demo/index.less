@@ -1,0 +1,30 @@
+.ore-editor-page{
+    .topbar{
+        height: 50px;
+        background-color: #efefef;
+        display: flex;
+        align-items: center;
+        // border-bottom: 1px solid rgba(0,0,0,.2);
+        .page-title{
+            font-size: 24px;
+            padding-left: 20px;
+        }
+        .func-list{
+            display: flex;
+            margin-left: 100px;
+            >span{
+                padding:5px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            >span:hover{
+                background: #fefefe;
+            }
+        }
+    }
+    #ore{
+        height:calc(100vh - 50px);
+        >div{
+        }
+    }
+}

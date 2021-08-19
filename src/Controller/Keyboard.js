@@ -1,15 +1,22 @@
 import getAllCommands from "./commands";
-import getAllActions from "./actions";
 class Keyboard{
     constructor(editor){
         this.editor = editor;
-        this.actions = getAllActions(editor)
         this.commands = getAllCommands(editor,this.actions);
+        this.commandsMap = {};
+        this.commands.forEach(item=>{
+            this.commandsMap[item.name] = item;
+        })
         this.addEvents();
     }
 
+    execute(command,...data){
+        this.commandsMap[command].execute(...data)
+    }
+
     addEvents(){
-        this.editor.dom.addEventListener("keyup",(e)=>{
+        this.editor.page.cursor.dom.addEventListener("keydown",(e)=>{
+            console.log(e)
             const command = this.commands.find(each=>{
                 if(this.compareEvent(e,each)){
                     return each

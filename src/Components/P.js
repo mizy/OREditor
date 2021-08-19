@@ -1,22 +1,22 @@
 import Base from './Base';
 import * as components from './index'
-
 /**
  * @class
  */
 class P extends Base{
+    name="P"
     // 至少有一个
     children=[];
-    lineHeight = {};//这里定义个每行高的组件
-    constructor(data,renderer,globalPos){
+    lineHeight = [];//这里定义个每行高的组件
+    constructor(data,renderer){
         super();
         this.renderer = renderer;
         this.page = renderer.page;
         this.style = data.style||{};
         this.data = data;
-        this.globalPos = globalPos;
+        this.globalPos = {x:0,y:0};
         //右侧边界
-        this.rightGap = globalPos.x + renderer.width;
+        this.rightGap = this.globalPos.x + renderer.width;
         this.init();
     }
 
@@ -27,33 +27,135 @@ class P extends Base{
         this.initChildren();
     }
 
+    prevTemp=undefined;
+    getNext=(i,children)=>{
+        const child = children[i];
+        if(!child){
+            this.prevTemp = undefined;
+            return false;
+        }
+        const Comp = components[child.type];
+        const instance = new Comp({
+            data:child,
+            parent:this,
+            prev:this.prevTemp,
+        });
+        this.prevTemp = instance;
+        //上面的优先
+        this.children.push(instance);
+        instance.next = this.getNext(++i,children);
+        return instance;
+    }
+
+    addChildrenData(children){
+        this.data.children = [...this.data.children,...children];
+        const lastChild = this.children[this.children.length-1];
+        this.prevTemp = lastChild;
+        lastChild.next = this.getNext(0,children);
+        this.update(true);
+    }
+    
+
+    setChildrenData(children){
+        this.data.children = children;
+        this.clearChildren();
+        this.initChildren();
+        this.update(true);
+    }
+
     // 初始化子节点
     initChildren(){
         const {children} = this.data;
         this.textHeights = [];
-        let prev;
-        const getNext= (i)=>{
-            const child = children[i];
-            if(!child)return false;
-            const Comp = components[child.type];
-            const instance = new Comp({
-                data:child,
-                parent:this,
-                prev,
-            });
-            prev = instance;
-            //上面的优先
-            this.children.push(instance);
-            instance.next = getNext(++i);
-            return instance;
-        }
         //链表头渲染,这里至少会有一个，不能是空容器
-        this.headChild = getNext(0);
+        this.headChild = this.getNext(0,children);
+    }
+  
+    insertSpan(index,data){
+        const prev = this.children[index-1];
+        const next = this.children[index];
+        const Span = components['span'];
+        const instance = new Span({
+            data,
+            parent:this,
+            prev,
+        });
+        this.children.splice(index,0,instance);
+        if(next){
+            next.prev = instance;
+        }
+        if(prev){
+            prev.next = instance;
+        }
+        instance.next = next;
+        this.headChild = this.children[0];
+        return instance
+    }
+
+    toJSON(){
+        const data = {
+            type:"p",
+            children:[]
+        }
+        this.children.forEach(item=>{
+            data.children.push(item.toJSON())
+        })
+        return data;
     }
 
     removeChild(child){
+        //cursor重指向
+        if(this.renderer.activeComponent===child){
+            if(child.prev){
+                this.renderer.activeComponent = child.prev;
+                child.prev.index = child.prev.data.length;
+            }else if(child.next){
+                this.renderer.activeComponent = child.next;
+                child.next.index = 0;
+            }
+        }
+        // 链表重连
+       if(child.prev){
+           child.prev.next = child.next;
+       }
+       if(child.next){
+           child.next.prev = child.prev;
+       }
+       // 是否合并
+       if(child.prev&&child.next){
+           
+       }
        const index =  this.children.indexOf(child);
-       this.children.splice(index,1)
+       this.children.splice(index,1);
+       
+       if(this.children.length<1){
+           this.addEmptySpan();
+       }
+       // 头元素重置
+       this.headChild = this.children[0];
+    }
+
+    clearChildren(){
+        this.children.forEach(item=>{
+            item.clear();
+        });
+        this.children = [];
+        this.lineHeight = [];
+        this.headChild = undefined;
+    }
+
+    addEmptySpan(){
+        const instance = new components.span({
+            data:{
+                data:"",
+                style:{
+                    fontSize:14
+                }
+            },
+            parent:this
+        });
+        this.children.push(instance);
+        this.headChild = instance;
     }
 
     // 获取的位置
@@ -171,19 +273,53 @@ class P extends Base{
     }
 
     // 根据上面的位置更新下面的
-    update(){
+    update(force=false){
+        const {prev} = this;
+        if(prev&&!force){
+            const globalPos = {
+                x:prev.rect.x,
+                y:prev.rect.endY
+            }
+            // if(globalPos.x === this.globalPos.x&&globalPos.y===this.globalPos.y){
+            //     //相同情况下直接取消渲染，节省性能
+            //     return;
+            // }
+            if(this.globalPos.x === globalPos.x&&this.globalPos.y===globalPos.y){
+                return
+            }
+            this.globalPos = globalPos;
+        }
+        this.lineHeight = [];
         this.headChild.update();
     }
 
     afterUpdate(){
-        this.bbox = this.dom.getBBox();
+        this.bbox = {
+            x:0,
+            y:this.globalPos.y,
+            width:this.renderer.width,
+            height:this.lineHeight[this.lineHeight.length-1].bottomY - this.lineHeight[0].topY
+        };
         this.rect = {
             ...this.globalPos,
             endX :this.globalPos.x+this.bbox.width,
-            endY :this.globalPos.y+this.bbox.height
+            endY :this.lineHeight[this.lineHeight.length-1].bottomY
         };
         if(this.next){
             this.next.update();
+        }else{
+            this.page.resize();
+        }
+    }
+
+    destroy(){
+        this.dom.remove();
+        this.children = [];
+        this.prev&&(this.prev.next = this.next);
+        this.next&&(this.next.prev = this.prev);
+        this.renderer.removeChild(this);
+        for(let key in this){
+            this[key] = undefined
         }
     }
 }

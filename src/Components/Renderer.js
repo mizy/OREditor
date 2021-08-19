@@ -33,17 +33,10 @@ class Renderer{
      */
     init(){
         const {data} = this.page;
-        let nowXY = {
-            x:0,
-            y:0
-        };
+       
         data.forEach(eachData=>{
             const Item = components[eachData.type||'p'];
-            const instance = new Item(eachData,this,{
-                ...nowXY
-            });
-            const bbox = instance.getBBox();
-            nowXY.y += bbox.height;
+            const instance = new Item(eachData,this);
             this.children.push(instance)
         });
         // 默认到初始化位置
@@ -115,6 +108,49 @@ class Renderer{
         return res;
     }
 
+    update(){
+        let height = 0;
+        this.children.forEach(item=>{
+            height+=item.bbox.height;
+        });
+        this.bbox = {
+            width:this.width,
+            height:height
+        }
+    }
+
+    removeChild(child){
+        const index = this.children.indexOf(child);
+        this.children.splice(index,1)
+    }
+
+    mergeData(prev,next){
+
+    }
+
+    checkComposite(component){
+        const {next} = component;
+        if(!next){
+            return false;
+        }
+        if(next.type!==component.type){
+            return false;
+        }
+        if(Object.keys(component.style).length!==Object.keys(next.style).length){
+            return false;
+        }
+        for(let key in component.style){
+            const value = component.style[key];
+            if(value!==next.style[key]){
+                return false;
+            }
+        }
+        const data = next.toJSON();
+        next.destroy(false);
+        component.addData(data.data);
+        component.updateHead();
+        return true;
+    }
 
 }
 export default Renderer;
