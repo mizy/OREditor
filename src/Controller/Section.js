@@ -146,9 +146,10 @@ class Section{
     getSelections(){
         let startPos = this.startPos.y<=this.dragPos.y?this.startPos:this.dragPos;
         let dragPos = this.startPos.y<=this.dragPos.y?this.dragPos:this.startPos;
-        if(this.startPos.nowLine===this.dragPos.nowLine&&this.dragPos.x<this.startPos.x){
-            startPos = this.dragPos;
-            dragPos = this.startPos
+        if(startPos.component.parent===dragPos.component.parent&&startPos.nowLine===dragPos.nowLine&&dragPos.x<startPos.x){
+            let temp = startPos;
+            startPos = dragPos;
+            dragPos = temp;
         }
         const startComponent = startPos.component;
         const endComponent = dragPos.component;

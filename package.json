@@ -18,7 +18,9 @@
     "url": "https://github.com/mizy/easygo/issues"
   },
   "homepage": "https://github.com/mizy/OREditor#readme",
-  "dependencies": {},
+  "dependencies": {
+    "react-color": "^2.19.3"
+  },
   "devDependencies": {
     "@ant-design/icons": "^4.6.2",
     "@babel/core": "^7.14.6",

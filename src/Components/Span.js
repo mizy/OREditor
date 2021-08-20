@@ -4,7 +4,8 @@ import Base from './Base';
  * @class
  */
 class Span extends Base{
-    name="Span"
+    name="Span";
+    nowLine=0;//当前span获取焦点的行
     indexMap={}
     //tips: 尽量不要再初始化的过程中进行数据相关操作，否则类的操控会太过自动化，难以操控，尽量保持专职专能
     constructor({data,parent,prev,next}){
@@ -17,7 +18,9 @@ class Span extends Base{
         this.style = Object.assign({
             fontSize:14,
             lineSpace:10,
-            textSpace:0
+            textSpace:0,
+            fontWeight:'normal',
+            fontStyle:'unset'
         },data.style);
         this.data = data.data;
         this.initFontHeight();
@@ -40,8 +43,13 @@ class Span extends Base{
     }
 
     updateStyle(){
-        this.dom.setAttribute("font-size",this.style.fontSize);
-        this.dom.setAttribute("fill",this.style.color);
+        const {color,fontSize,fontWeight,fontStyle} = this.style;
+        this.dom.style.fill = color;
+        this.dom.style.fontSize = fontSize;
+        this.dom.style.fontWeight = fontWeight;
+        this.dom.style.fontStyle = fontStyle;
+        // this.dom.setAttribute("font-size",this.style.fontSize);
+        // this.dom.setAttribute("fill",this.style.color||'');
     }
 
     //获取指定索引字符的起始位置

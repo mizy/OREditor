@@ -80,6 +80,7 @@ class Cursor{
                     flag = false;
                 }
             }
+            //是否新增标签·
             if(flag){
                 return
             }
@@ -107,7 +108,7 @@ class Cursor{
             }
             renderer.activeComponent = now;
             now.index = 0;
-            parent.update();//简单点
+            parent.update(true);//简单点
         }
     }
 

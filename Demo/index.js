@@ -1,6 +1,7 @@
 import ReactDOM from 'react-dom';
 import React,{useEffect,useState} from 'react';
 import { Spin } from 'antd';
+import 'antd/dist/antd.css';
 import OREditor from '../src';
 import Topbar from './Topbar';
 import './index.less';
