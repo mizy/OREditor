@@ -24,7 +24,19 @@ class P extends Base{
         this.dom = this.renderer.createElementNS('g');
         this.renderer.g.appendChild(this.dom);
         this.dom.classList.add('ore-p');
+        if(this.listStyle){
+            this.initListStyle();
+        }
         this.initChildren();
+        
+    }
+
+    /**
+     * 构造列表样式
+     */
+    initListStyle(){
+        const {listStyle={} } = this.data;
+        const {type,indent} = this.state;
     }
 
     prevTemp=undefined;
