@@ -15,8 +15,9 @@ export default function SetStyle(style,page,renderer){
             const lastData =  startComponent.data.substring(endPos.index);
             startIndex = startParent.children.indexOf(startComponent);
             startComponent.destroy(false);
+            let frist,mid,end;
             if(beforeData){
-                startParent.insertSpan(startIndex,{
+                frist = startParent.insertSpan(startIndex,{
                     type:"span",
                     style:{
                         ...startStyle
@@ -26,7 +27,7 @@ export default function SetStyle(style,page,renderer){
                 startIndex++;
             }
             if(middleData){
-                let now = startParent.insertSpan(startIndex,{
+                mid = startParent.insertSpan(startIndex,{
                     type:"span",
                     style:{
                         ...startStyle,
@@ -35,11 +36,11 @@ export default function SetStyle(style,page,renderer){
                     data:middleData
                 });
                 startIndex++;
-                renderer.activeComponent = now;
+                renderer.activeComponent = mid;
                 renderer.activeComponent.index = middleData.length;
             }
             if(lastData){
-                startParent.insertSpan(startIndex,{
+                end = startParent.insertSpan(startIndex,{
                     type:"span",
                     style:{
                         ...startStyle,
@@ -49,10 +50,11 @@ export default function SetStyle(style,page,renderer){
                 startIndex++;
             }
             startParent.update(true);
+            startParent.checkChildrenComposite()
         }else{
             const startData = startComponent.spliceChar(startPos.index,startComponent.data.length-startPos.index);
             startIndex = startParent.children.indexOf(startComponent);
-            let first ;
+            let first ;let end;
             // 如果开头有数据才插入
             if(startData){
                 first = startParent.insertSpan(startIndex+1,{
@@ -70,7 +72,7 @@ export default function SetStyle(style,page,renderer){
             const endData = endComponent.spliceChar(0,endPos.index);
             if(endData){
                 // 组件可能被销毁,
-                endParent.insertSpan(endIndex,{
+                end = endParent.insertSpan(endIndex,{
                     type:"span",
                     style:{
                         ...endStyle,
@@ -100,11 +102,15 @@ export default function SetStyle(style,page,renderer){
                 renderer.activeComponent = startComponent;
                 startComponent.index = startPos.index;
             }
-
+            renderer.checkComposite(startComponent);
+            renderer.checkComposite(first);
+            renderer.checkComposite(endComponent);
+            renderer.checkComposite(end);
         }
         
         section.hide();
         cursor.show();
+        
         return cursor.relocate();
     }else{
         page.cursor.setStyle({color:'red'});

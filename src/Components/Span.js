@@ -16,6 +16,7 @@ class Span extends Base{
         this.prev = prev;//单向链表
         this.next = next;//双向链表
         this.style = Object.assign({
+            color:"#000000",
             fontSize:14,
             lineSpace:10,
             textSpace:0,
@@ -23,7 +24,6 @@ class Span extends Base{
             fontStyle:'unset'
         },data.style);
         this.data = data.data;
-        this.initFontHeight();
         this.initDOM();
     } 
     
@@ -48,6 +48,7 @@ class Span extends Base{
         this.dom.style.fontSize = fontSize;
         this.dom.style.fontWeight = fontWeight;
         this.dom.style.fontStyle = fontStyle;
+        this.initFontHeight();
         // this.dom.setAttribute("font-size",this.style.fontSize);
         // this.dom.setAttribute("fill",this.style.color||'');
     }
@@ -229,6 +230,10 @@ class Span extends Base{
             if(escape(str).startsWith("%u")){//汉字时，重置字符串状态
                 chars = [];
                 hasWrapped = false;
+            }else if(str==='\t'){//tab不放到paths里
+                chars = [];
+                width *= 2;
+                hasWrapped = false;
             }else if(str===' '){//空格不放到paths里
                 chars = [];
                 width *= 0.5;
@@ -309,14 +314,14 @@ class Span extends Base{
                     y:this.textHeights[lineNum]
                 };
                 // ||index===path.length-1 不用把最后一个坐标去掉吧
-                if(this.data[i] ===' '){
+                if(this.data[i] ===' '||this.data[i]==='\t'){
                     i++;
                     return false;//空格跳过
                 }   
                 this.renderStr += this.data[i]||"";
                 i++;
-                xStr += `${parseFloat(x.toFixed(2))} `;
-                yStr += `${parseFloat(this.textHeights[lineNum].toFixed(2))} `;
+                xStr += `${(x).toFixed(2)} `;
+                yStr += `${this.textHeights[lineNum].toFixed(2)} `;
             })
         }); 
         this.dom.textContent = this.renderStr;

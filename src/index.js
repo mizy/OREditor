@@ -4,10 +4,11 @@
  */
 import Page from './View/Page';
 import Keyboard from './Controller/Keyboard'
-
+import Event from './Event'
 import './index.less'
-class OREditor {
+class OREditor extends Event{
     constructor(container,option){
+        super();
         this.container = container;
         this.option = Object.assign({
             height:600,

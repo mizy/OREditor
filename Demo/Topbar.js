@@ -9,16 +9,28 @@ import {
 import { TwitterPicker } from "react-color";
 import { Dropdown, Menu } from "antd";
 const fontSizeEnum = [12,14,16,18,24,32,46,64];
-export default function Topbar(props) {
+export default function Topbar(props) { 
     const { app } = props;
     const [style, setStyle] = useState({
         fontSize:14
     });
     
     useEffect(()=>{
-        // 箭头span切换
-    },[])
+        if(!app)return
+        app.on("focus",()=>{
+            const {style:nowStyle} = app.page.renderer.activeComponent;
+            for(let key in nowStyle){
+                style[key] = nowStyle[key]
+            }
+            setStyle({...style})
+        })
+    },[app])
 
+    const changeColor = ()=>{
+        app.keyboard.execute("SetStyle", {
+            color: style.color,
+        });
+    }
     return (
         <div className="topbar">
             <div className="page-title">OREditor DEMO</div>
@@ -33,24 +45,24 @@ export default function Topbar(props) {
                             onChange={(value) => {
                                 style.color = value.hex;
                                 setStyle({ ...style });
+                                changeColor();
                             }}
                         />
                     }
                 >
                     <FontColorsOutlined
                         style={{ color: style.color }}
-                        onClick={() => {
-                            app.keyboard.execute("SetStyle", {
-                                color: style.color,
-                            });
-                        }}
+                        onClick={changeColor}
                     />
                 </Dropdown>
                 <Dropdown
                     placement="bottomCenter"
                     overlay={<Menu onClick={({key})=>{
                         style.fontSize = key;
-                        setStyle({...style})
+                        setStyle({...style});
+                        app.keyboard.execute("SetStyle", {
+                            fontSize: parseFloat(style.fontSize),
+                        });
                     }}>
                         {fontSizeEnum.map(item=>(
                             <Menu.Item key={item}>{item}px</Menu.Item>
@@ -59,16 +71,18 @@ export default function Topbar(props) {
                     <span><FontSizeOutlined />({style.fontSize})</span>
                 </Dropdown>
                 <BoldOutlined
+                    className={style.fontWeight==="bold"?'active':"'"}
                     onClick={() => {
                         app.keyboard.execute("SetStyle", {
-                            fontWeight: "bold",
+                            fontWeight: style.fontStyle!=="bold"?'bold':'normal',
                         });
                     }}
                 />
                 <ItalicOutlined
+                    className={style.fontStyle==="italic"?'active':"'"}
                     onClick={() => {
                         app.keyboard.execute("SetStyle", {
-                            fontStyle: "italic",
+                            fontStyle: style.fontStyle==="italic"?'unset':'italic',
                         });
                     }}
                 />

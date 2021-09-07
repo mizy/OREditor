@@ -128,7 +128,7 @@ class Renderer{
 
     }
 
-    checkComposite(component){
+    checkComposite(component={}){
         const {next} = component;
         if(!next){
             return false;
@@ -148,7 +148,7 @@ class Renderer{
         const data = next.toJSON();
         next.destroy(false);
         component.addData(data.data);
-        component.updateHead();
+        component.parent.update(true);
         return true;
     }
 

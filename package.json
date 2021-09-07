@@ -4,7 +4,7 @@
   "description": "richtext editor",
   "main": "index.js",
   "scripts": {
-    "demo": "webpack serve --config webpack.config.demo.js --node-env development ",
+    "start": "webpack serve --config webpack.config.demo.js --node-env development ",
     "watch": "webpack watch ",
     "build": "webpack build --mode production"
   },

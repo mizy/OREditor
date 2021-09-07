@@ -144,6 +144,15 @@ class P extends Base{
         this.headChild = undefined;
     }
 
+    checkChildrenComposite(){
+        let component = this.headChild;
+        let prev = component.prev;
+        while(component){
+            this.renderer.checkComposite(component)
+            component = component.next;
+        }
+    }
+
     addEmptySpan(){
         const instance = new components.span({
             data:{

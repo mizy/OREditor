@@ -32,6 +32,15 @@ class Cursor{
         //是否处于中文
         let compositionIndex;
         let beforeLength = 0;
+        this.dom.addEventListener("keydown",(e)=>{
+            if(e.key==="Tab"){
+                const {activeComponent} = renderer;
+                e.preventDefault();
+                activeComponent.spliceChar(activeComponent.index,0,'\t');
+                this.relocate();
+                this.dom.value = '';
+            }
+        })
         this.dom.addEventListener("input",(e)=>{
             e.preventDefault();
             // if(!this.focus)return;
@@ -172,6 +181,7 @@ class Cursor{
 
     focus(){
         this.dom.focus();
+        this.page.editor.fire("focus")
     }
 
     hide(){

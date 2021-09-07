@@ -11,7 +11,7 @@ const testData = [{
             fontSize:14,
         },
         type:"span",
-        data:'我 是'
+        data:'我 是\t'
     },{
         style:{
             fontSize:32,
