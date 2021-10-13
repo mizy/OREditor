@@ -4,7 +4,8 @@ import * as components from './index'
  * @class
  */
 class P extends Base{
-    name="P"
+    name="P";
+    tabWidth=30;//tab 宽度
     // 至少有一个
     children=[];
     lineHeight = [];//这里定义个每行高的组件
@@ -24,19 +25,8 @@ class P extends Base{
         this.dom = this.renderer.createElementNS('g');
         this.renderer.g.appendChild(this.dom);
         this.dom.classList.add('ore-p');
-        if(this.listStyle){
-            this.initListStyle();
-        }
         this.initChildren();
         
-    }
-
-    /**
-     * 构造列表样式
-     */
-    initListStyle(){
-        const {listStyle={} } = this.data;
-        const {type,indent} = this.state;
     }
 
     prevTemp=undefined;
@@ -293,18 +283,49 @@ class P extends Base{
         return minChild;
     }
 
+    getIndentDis(){
+        const {listStyle={} } = this.data;
+        const {type,indent = 0} = listStyle;
+        return indent===0?(type?this.tabWidth:0):indent*this.tabWidth;
+    }
+    /**
+     * 构造列表样式
+     */
+    updateListStyle(){
+        const {renderer} = this;
+        const {listStyle={} } = this.data;
+        const {type} = listStyle;
+        const x = this.getIndentDis();
+        const y = this.globalPos.y;
+        if(type!==this.oldListType&&!this.listStyleDOM){//已经存在
+            this.listStyleDOM&&this.listStyleDOM.remove();
+            let dom ;
+            if(type==='ol'){
+                dom = this.renderer.createElementNS('text');
+                renderer.innerText(dom,1)
+            }else if(type==="ul"){
+                dom = this.renderer.createElementNS('circle');
+                dom.setAttribute("r",3);
+                dom.classList.add("ul-circle")
+            }
+            this.dom.appendChild(dom);
+            this.listStyleDOM = dom;
+        }
+        if(!this.listStyleDOM)return;
+        const lineHeight = this.lineHeight[0]?this.lineHeight[0].component.lineHeight/2:10;
+        this.listStyleDOM.setAttribute("transform",`translate(${x-10} ${y+lineHeight})`);
+        this.oldListType=type;
+    }
+
     // 根据上面的位置更新下面的
     update(force=false){
         const {prev} = this;
         if(prev&&!force){
             const globalPos = {
-                x:prev.rect.x,
+                x:this.getIndentDis(),
                 y:prev.rect.endY
             }
-            // if(globalPos.x === this.globalPos.x&&globalPos.y===this.globalPos.y){
-            //     //相同情况下直接取消渲染，节省性能
-            //     return;
-            // }
+            //相同情况下直接取消渲染，节省性能
             if(this.globalPos.x === globalPos.x&&this.globalPos.y===globalPos.y){
                 return
             }
@@ -312,6 +333,7 @@ class P extends Base{
         }
         this.lineHeight = [];
         this.headChild.update();
+        this.updateListStyle();
     }
 
     afterUpdate(){

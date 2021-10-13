@@ -113,6 +113,6 @@ export default function SetStyle(style,page,renderer){
         
         return cursor.relocate();
     }else{
-        page.cursor.setStyle({color:'red'});
+        page.cursor.setStyle(style);
     }
 }

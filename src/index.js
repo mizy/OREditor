@@ -86,3 +86,8 @@ class OREditor extends Event{
     }
 }
 export default OREditor;
+export {
+    Page,
+    Keyboard,
+    Event
+}

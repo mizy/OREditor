@@ -65,7 +65,7 @@ class Cursor{
             }
         });
         this.dom.addEventListener('compositionstart',(e)=>{
-            compositionIndex = renderer.activeComponent.index;
+            compositionIndex = this.style?0:renderer.activeComponent.index;
             this.composition = true;
         });
         this.dom.addEventListener("compositionend",(e)=>{
@@ -118,12 +118,13 @@ class Cursor{
             renderer.activeComponent = now;
             now.index = 0;
             parent.update(true);//简单点
+            this.style = undefined;
         }
     }
 
     setStyle(style){
         this.style = style;
-        this.focus();
+        this.focus(true);
     }
     
     moveTo({x,y,textHeight=0,height}){
@@ -179,9 +180,9 @@ class Cursor{
         this.focus();
     }
 
-    focus(){
+    focus(silent=false){
         this.dom.focus();
-        this.page.editor.fire("focus")
+        if(!silent)this.page.editor.fire("focus")
     }
 
     hide(){

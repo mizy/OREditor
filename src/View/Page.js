@@ -37,6 +37,10 @@ const testData = [{
     }]
 },{
     type:"p",
+    listStyle:{
+        type:"ul",
+        indent:0
+    },
     children:[{
         type:"span",
         data:"第三行的文本"
