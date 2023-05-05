@@ -6,7 +6,8 @@
   "scripts": {
     "start": "webpack serve --config webpack.config.demo.js --node-env development ",
     "watch": "webpack watch ",
-    "build": "webpack build --mode production"
+    "build": "webpack build --mode production",
+    "build:demo": "webpack build --config webpack.config.demo.js --mode production"
   },
   "repository": {
     "type": "git",
@@ -18,9 +19,7 @@
     "url": "https://github.com/mizy/easygo/issues"
   },
   "homepage": "https://github.com/mizy/OREditor#readme",
-  "dependencies": {
-    "react-color": "^2.19.3"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@ant-design/icons": "^4.6.2",
     "@babel/core": "^7.14.6",
@@ -39,11 +38,13 @@
     "less": "^3.11.3",
     "less-loader": "^6.2.0",
     "react": "^17.0.2",
+    "react-color": "^2.19.3",
     "react-dom": "^17.0.2",
     "style-loader": "^1.2.1",
     "url-loader": "^4.1.0",
     "webpack": "^5.42.1",
     "webpack-cli": "^4.7.2",
+    "ts-loader": "^9.4.2",
     "webpack-dev-server": "^3.11.2"
   }
 }
