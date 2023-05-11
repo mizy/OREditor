@@ -48,13 +48,13 @@ class OREditor extends Event {
     this.keyboard = new Keyboard(this);
     this.schema = new Schema(this);
     if (!this.option.data) {
-      this.schema.setData([{
-        type: 'p',
-        children: [{
-          text: '',
-          type: 'span'
+      this.schema.setInitData({
+        content:[{
+          type: 'p',
+          style: {},
+          children: []
         }]
-      }]);
+      });
     }
     requestAnimationFrame(() => {
       this.resize();

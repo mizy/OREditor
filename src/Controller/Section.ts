@@ -101,8 +101,8 @@ class Section {
     }
     //当前行
     if (this.dragPos.focusLine === this.startPos.focusLine && startParent === endParent) {
-      const topY = startParent.lineHeight[this.startPos.focusLine].topY + startParent.globalPos.y;
-      const bottomY = startParent.lineHeight[this.dragPos.focusLine].bottomY + startParent.globalPos.y;
+      const topY = startParent.lineHeight[this.startPos.focusLine].top + startParent.globalPos.y;
+      const bottomY = startParent.lineHeight[this.dragPos.focusLine].bottom + startParent.globalPos.y;
       this.paths = [
         {
           x: this.startPos.x,
@@ -132,10 +132,10 @@ class Section {
 
       startParent = startPos.component.parent;
       endParent = dragPos.component.parent;
-      const firstTopY = startParent.lineHeight[startPos.focusLine].topY + startParent.globalPos.y;
-      const firstBottomY = startParent.lineHeight[startPos.focusLine].bottomY + startParent.globalPos.y;
-      const lastTopY = endParent.lineHeight[dragPos.focusLine].topY + endParent.globalPos.y;
-      const lastBottomY = endParent.lineHeight[dragPos.focusLine].bottomY + endParent.globalPos.y;
+      const firstTopY = startParent.lineHeight[startPos.focusLine].top + startParent.globalPos.y;
+      const firstBottomY = startParent.lineHeight[startPos.focusLine].bottom + startParent.globalPos.y;
+      const lastTopY = endParent.lineHeight[dragPos.focusLine].top + endParent.globalPos.y;
+      const lastBottomY = endParent.lineHeight[dragPos.focusLine].bottom + endParent.globalPos.y;
       const right = Math.max(startPos.component.parent.rect.endX, dragPos.component.parent.rect.endX)
       this.paths = [{
         x: startPos.component.parent.rect.x,

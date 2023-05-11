@@ -1,5 +1,6 @@
 
 import { Page } from '..';
+import { OREditorData } from '../Data/Schema';
 import { IParagraphData } from '../View/Page';
 import BaseComponent from './Base';
 import P from './P';
@@ -45,9 +46,10 @@ class Renderer {
   /**
    * 初始化数据
    */
-  render(data) {
+  render(data: OREditorData) {
     this.clear();
-    data.forEach(eachData => {
+    const {content} = data;
+    content.forEach(eachData => {
       // 只会为P
       const instance = new P(eachData, this);
       this.children.push(instance)
@@ -172,13 +174,28 @@ class Renderer {
     this.children = [];
   }
 
-  toJSON(): IParagraphData[] {
+  getActiveComponentIndex(): number[]{
+    const index = [];
+    const { activeComponent } = this;
+    index[2] = activeComponent.index;
+    index[1] = activeComponent.parent.children.indexOf(activeComponent);
+    index[0] = this.children.indexOf(activeComponent.parent);
+    return index;
+  }
+
+  toJSON(): OREditorData {
     const { children } = this;
     const res = [];
     children.forEach(each => {
       res.push(each.toJSON());
     });
-    return res;
+
+    return {
+      content: res,
+      cursor: {
+        index:this.getActiveComponentIndex()
+      } 
+    };
   }
 }
 export default Renderer;

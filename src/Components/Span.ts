@@ -132,7 +132,7 @@ class Span extends Base {
     const { paths, textHeights, parent } = this;
     this.index = 0;
     for (let i = 0; i < textHeights.length; i++) {
-      const bottomY = parent.lineHeight[this.startLineNum + i].bottomY;
+      const bottomY = parent.lineHeight[this.startLineNum + i].bottom;
       //y在组件上方，或者到最后都没有
       if (y < bottomY || i === textHeights.length - 1) {
         let finalX, beforeX, j = 0;
@@ -205,19 +205,19 @@ class Span extends Base {
         localPos = { x: 0, y: rect.endY + this.lineHeight };
         this.parent.lineHeight[lineNum] = {
           component: this,
-          topY: localPos.y - this.fontSizeHeight - this.disY,
-          bottomY: localPos.y - this.fontSizeHeight - this.disY + this.lineHeight
+          top: localPos.y - this.fontSizeHeight - this.disY,
+          bottom: localPos.y - this.fontSizeHeight - this.disY + this.lineHeight
         };
       } else if (fontSize > prevSize) {//不换行的情况
-        let topY = this.parent.lineHeight[lineNum].topY;
+        let top = this.parent.lineHeight[lineNum].top;
         let beforeY = localPos.y;
-        localPos.y = topY + this.disY + this.fontSizeHeight;
+        localPos.y = top + this.disY + this.fontSizeHeight;
         this.prev.onLineFontSizeChange(beforeY, localPos.y);
         // 更改记录当前行的最大高度
         this.parent.lineHeight[lineNum] = {
           component: this,
-          topY,
-          bottomY: topY + this.lineHeight
+          top,
+          bottom: top + this.lineHeight
         };
       }
       this.startLineNum = lineNum;
@@ -226,8 +226,8 @@ class Span extends Base {
       // 第一行
       this.parent.lineHeight[0] = {
         component: this,
-        topY: 0,
-        bottomY: this.lineHeight
+        top: 0,
+        bottom: this.lineHeight
       };
       this.startLineNum = 0;
       localPos = { x: 0, y: this.disY + this.fontSizeHeight };
@@ -265,10 +265,46 @@ class Span extends Base {
     if (flag)
       this.calcPos();
 
+    // 这里先生成坐标，再对坐标进行变换
+    this.makePaths();
+    this.updateParentLineHeight();
+
+    // 链式渲染
+    if (this.next) {
+      this.next.update(true);
+    } else {
+      this.parent.lineHeight.splice(this.endLineNum + 1, this.parent.lineHeight.length - this.endLineNum - 1)
+      this.parent.afterUpdate()
+    }
+  }
+
+  render() {
+    this.updateAlign();
+    this.renderPaths();
+  }
+
+  updateAlign() {
+    const { style={} } = this.parent.data;
+    const { textAlign = "left" } = style;
+    if (textAlign&&textAlign !== "left") {
+      for (let i = 0; i < this.paths.length; i++) {
+        const path = this.paths[i];
+        const lineNum = i + this.startLineNum;
+        const lineHeight = this.parent.lineHeight[lineNum];
+        const { width } = lineHeight;
+        const offset = (this.parent.rightGap - this.parent.globalPos.x - width) / (textAlign==="center"?2:1);
+        for (let j = 0; j < path.length; j++) {
+          path[j] += offset;
+        }
+      }
+    }
+  }
+
+  // 生成每个字符的坐标，这里实现居中逻辑会更好点，专人专事，减少其他地方调用类内部属性的逻辑
+  makePaths() {
     const { measure, option: { padding } } = this.page;
     const { fontSize = 14, textSpace } = this.style;
     const rightGap = this.parent.rightGap;
-
     //该组件每行高度
     // 字高，用来向上偏移
     let { x, y } = this.localPos;
@@ -310,7 +346,7 @@ class Span extends Base {
         x = 0;
         // 这里应该是取当前行最大组件的行高
         if (textHeights.length === 1) {
-          y = this.parent.lineHeight[this.startLineNum].bottomY + this.disY + this.fontSizeHeight;
+          y = this.parent.lineHeight[this.startLineNum].bottom + this.disY + this.fontSizeHeight;
         } else {
           y += this.lineHeight;
         }
@@ -339,28 +375,29 @@ class Span extends Base {
     this.endLineNum = this.startLineNum + textHeights.length - 1;
     this.paths = paths;
     this.textHeights = textHeights;
-    this.updateParentLineHeight();
-    this.updatePaths();
-    // 链式渲染
-    if (this.next) {
-      this.next.update(true);
-    } else {
-      this.parent.lineHeight.splice(this.endLineNum + 1, this.parent.lineHeight.length - this.endLineNum - 1)
-      this.parent.afterUpdate()
-    }
   }
 
   updateParentLineHeight() {
-    for (let i = 1; i < this.textHeights.length; i++) {
-      this.parent.lineHeight[this.startLineNum + i] = {
-        component: this,
-        topY: this.textHeights[i] - this.fontSizeHeight - this.disY,
-        bottomY: this.textHeights[i] - this.fontSizeHeight - this.disY + this.lineHeight,
+    for (let i = 0; i < this.textHeights.length; i++) {
+      // 给新产生的行+1
+      if (i >= 1) {
+        this.parent.lineHeight[this.startLineNum + i] = {
+          component: this,
+          top: this.textHeights[i] - this.fontSizeHeight - this.disY,
+          bottom: this.textHeights[i] - this.fontSizeHeight - this.disY + this.lineHeight,
+        }
       }
+      // 这里记录下每行的宽度，以便做居中逻辑时，对生成的坐标后处理
+      const line = this.parent.lineHeight[this.startLineNum + i];
+      const minLeft = Math.min(line.left || Infinity, this.paths[i][0]);
+      const maxRight = Math.max(line.right || -Infinity, this.paths[i].slice(-1)[0]);
+      line.left = minLeft;
+      line.right = maxRight;
+      line.width = maxRight - minLeft;
     }
   }
 
-  updatePaths() {
+  renderPaths() {
     this.indexMap = {}
     const { text: data } = this.data;
     let i = 0;
@@ -369,13 +406,14 @@ class Span extends Base {
      * @param {String} 当前渲染的字符串(不包含空格)
      */
     this.renderStr = '';
+    // 在这里做居中逻辑
     this.paths.forEach((path, lineNum) => {
-
       // path.pop();
       path.forEach((x, index) => {
+        const y = this.textHeights[lineNum];
         this.indexMap[i] = {
           x,
-          y: this.textHeights[lineNum],
+          y,
           lineNum: this.startLineNum + lineNum,
         };
         // ||index===path.length-1 不用把最后一个坐标去掉吧
@@ -386,7 +424,7 @@ class Span extends Base {
         this.renderStr += data[i] || "";
         i++;
         xStr += `${(x).toFixed(2)} `;
-        yStr += `${this.textHeights[lineNum].toFixed(2)} `;
+        yStr += `${(y).toFixed(2)} `;
       })
     });
     this.dom.textContent = this.renderStr;
@@ -417,7 +455,7 @@ class Span extends Base {
       if (this.textHeights.length === 1) {//只有一行的情况，组件的全局坐标也给他改咯
         this.localPos.y = nowY;
       }
-      this.updatePaths();
+      this.renderPaths();
       if (this.prev) {
         this.prev.onLineFontSizeChange(beforeY, nowY)
       }

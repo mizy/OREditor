@@ -20,13 +20,17 @@ class Keyboard {
 
   addEvents() {
     this.editor.page.cursor.dom.addEventListener("keydown", (e) => {
-      console.log(e)
       const command = this.commands.find(each => {
         if (this.compareEvent(e, each)) {
           return each
         }
       })
-      command && command.execute();
+      if (command) {
+        if(command.name==='Redo'||command.name==='Undo'){
+          e.preventDefault();
+        }
+        command.execute();
+      }
     })
   }
 

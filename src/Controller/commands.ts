@@ -60,7 +60,7 @@ const getAllCommands = (editor: OREditor): ICommand[] => {
         const oldJSON = nowP.toJSON();
         let newPData: IParagraphData = {
           type: "p",
-          listStyle: oldJSON.listStyle,
+          listStyle: oldJSON.listStyle?{...oldJSON.listStyle}:undefined,
           children: [],
         };
         let next = component.next;
@@ -97,6 +97,7 @@ const getAllCommands = (editor: OREditor): ICommand[] => {
         renderer.activeComponent.index = 0;
         nowP.update(true);
         cursor.relocate();
+        editor.fire("change")
       },
       isValid,
     },
@@ -181,8 +182,7 @@ const getAllCommands = (editor: OREditor): ICommand[] => {
       execute: function () {
         const { activeComponent } = renderer;
         const { focusLine, parent } = activeComponent;
-        console.log(focusLine);
-        const nowY = parent.lineHeight[focusLine].topY - 1;
+        const nowY = parent.lineHeight[focusLine].top - 1;
         const { x } = activeComponent.getCursorPosByIndex();
         renderer.locateByGlobalPos(x, nowY + parent.globalPos.y);
         cursor.relocate();
@@ -202,7 +202,7 @@ const getAllCommands = (editor: OREditor): ICommand[] => {
       execute: function () {
         const { activeComponent } = renderer;
         const { focusLine, parent } = activeComponent;
-        const nowY = parent.lineHeight[focusLine].bottomY + 1;
+        const nowY = parent.lineHeight[focusLine].bottom + 1;
         const { x, y } = activeComponent.getCursorPosByIndex();
         renderer.locateByGlobalPos(x, nowY + parent.globalPos.y);
         cursor.relocate();
@@ -274,6 +274,50 @@ const getAllCommands = (editor: OREditor): ICommand[] => {
       },
       isValid,
     },
+    {
+      name: "Redo",
+      keys: [{ key: "z", altKey: false, ctrlKey: true, shiftKey: true },
+        {
+          key: "z",
+          altKey: false,
+          metaKey: true,
+          ctrlKey: false,
+          shiftKey: true,
+        }],
+      execute: function () {
+        editor.schema.redo();
+      },
+      isValid,
+    },
+    {
+      name: "Undo",
+      keys: [{ key: "z", altKey: false, ctrlKey: true, shiftKey: false },
+        {
+          key: "z",
+          altKey: false,
+          metaKey: true,
+          ctrlKey: false,
+          shiftKey: false,
+        }],
+      execute: function () {
+        editor.schema.undo();
+      },
+      isValid,
+    },
+    {
+      name: "SetTextAlign",
+      keys: [],
+      execute: function (align: string) {
+        const { activeComponent } = renderer;
+        const { parent } = activeComponent;
+        parent.setStyle({
+          "textAlign": align,
+        });
+        parent.update();
+        cursor.relocate();
+      },
+      isValid
+    }
   ];
 };
 export default getAllCommands;

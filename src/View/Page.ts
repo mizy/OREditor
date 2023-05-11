@@ -2,7 +2,6 @@
 import Cursor from "./Cursor";
 import Measure from '../Utils/Measure';
 import Renderer from '../Components/Renderer';
-import Schema from "../Data/Schema";
 import Section from '../Controller/Section';
 import OREditor, { IOREditorOption } from '..';
 import { ISpanData } from '../Components/Span';

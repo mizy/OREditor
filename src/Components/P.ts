@@ -14,8 +14,12 @@ class P extends Base {
   children: Span[] = [];
   lineHeight: {// 在Span组件内维护行高
     component: Span;// 行高的组件
-    topY: number;// 行高的顶部相对坐标
-    bottomY: number;// 行高的底部相对坐标
+    top: number;// 行高的顶部相对坐标
+    bottom: number;// 行高的底部相对坐标
+    // 以下属性在render后生成
+    width?: number; 
+    left?: number;
+    right?: number;
   }[] = [];//这里定义个每行高的组件
   headChild: Span;
   page: Page;
@@ -247,25 +251,25 @@ class P extends Base {
       rects.push({
         left: rect.x,
         right: bbox.x + bbox.width,
-        top: startLine.topY,
-        bottom: startLine.bottomY
+        top: startLine.top,
+        bottom: startLine.bottom
       }, {
         left: bbox.x,
         right: bbox.x + bbox.width,
-        top: startLine.bottomY,
-        bottom: endLine.topY
+        top: startLine.bottom,
+        bottom: endLine.top
       }, {
         left: bbox.x,
         right: rect.endX,
-        top: endLine.topY,
-        bottom: endLine.bottomY
+        top: endLine.top,
+        bottom: endLine.bottom
       })
     } else {
       rects.push({
         left: bbox.x,
         right: rect.endX,
-        top: startLine.topY,
-        bottom: startLine.bottomY
+        top: startLine.top,
+        bottom: startLine.bottom
       })
     }
     let minDis = Infinity;
@@ -320,7 +324,15 @@ class P extends Base {
     const { listStyle } = this.data;
     if (!listStyle) return 0;
     const { indent = 0 } = listStyle;
-    return indent === 0 ? this.tabWidth : indent * this.tabWidth;
+    return (indent+1) * this.tabWidth;
+  }
+
+  setStyle(params: { [key:string]: any}) {
+    if (this.data.style) {
+      Object.assign(this.data.style, params);
+    } else {
+      this.data.style = params;
+    }
   }
 
   // 根据上面的位置更新下面的
@@ -337,13 +349,19 @@ class P extends Base {
       }
       this.globalPos = globalPos;
     }
-    this.dom.setAttribute('transform', `translate(${this.globalPos.x},${this.globalPos.y})`);
     this.rightGap = this.renderer.width - this.globalPos.x;
     this.lineHeight = [];
     //右侧边界,
     this.headChild.update();
+    this.updateStyle();
+    this.globalPos.x = this.getIndentDis();//更新x偏移值
+    this.dom.setAttribute('transform', `translate(${this.globalPos.x},${this.globalPos.y})`);
+  } 
+
+  updateStyle() {
     this.updateListStyle();
   }
+
   updateTransform() {
     const { globalPos } = this;
     const { x, y } = globalPos;
@@ -363,7 +381,7 @@ class P extends Base {
       return;
     }
     const { type } = listStyle;
-    if (type !== this.oldListType && !this.listStyleDOM) {//已经存在
+    if (type !== this.oldListType || !this.listStyleDOM) {//没有dom或者发生变化则重绘
       this.listStyleDOM && this.listStyleDOM.remove();
       let dom;
       if (type === 'ol') {
@@ -384,6 +402,8 @@ class P extends Base {
   }
 
   afterUpdate() {
+    // 当更新完坐标后，先渲染，再更新后面的
+    this.render();
     this.updateBBox();
     if (this.next) {
       this.next.update();
@@ -392,17 +412,23 @@ class P extends Base {
     }
   }
 
+  render() {
+    this.children.forEach(item => {
+      item.render();
+    })
+  }
+
   updateBBox() {
     this.bbox = {
       x: 0,
       y: this.globalPos.y,
       width: this.renderer.width,
-      height: this.lineHeight.length ? (this.lineHeight[this.lineHeight.length - 1].bottomY - this.lineHeight[0].topY) : 0
+      height: this.lineHeight.length ? (this.lineHeight[this.lineHeight.length - 1].bottom - this.lineHeight[0].top) : 0
     };
     this.rect = {
       ...this.globalPos,
       endX: this.bbox.width,// p的宽度目前为renderer的宽度
-      endY: this.globalPos.y + (this.lineHeight.length ? this.lineHeight[this.lineHeight.length - 1].bottomY : 0)
+      endY: this.globalPos.y + (this.lineHeight.length ? this.lineHeight[this.lineHeight.length - 1].bottom : 0)
     };
   }
 

@@ -1,6 +1,5 @@
 const path = require("path");
 const webpack = require("webpack");
-const devMode = process.env.SYS_ENV !== "production";
 
 module.exports = {
   cache: true,
@@ -23,6 +22,12 @@ module.exports = {
     openPage: "./index.html",
     contentBase: "./public",
     hot: true
+  },
+  resolve: {
+    extensions: ['.ts', '.js'],
+    alias: {
+      '@': path.join(__dirname, './src/'),
+    },
   },
   devtool: "source-map",
   module: {

@@ -64,6 +64,7 @@ class Cursor {
         activeComponent.spliceChar(activeComponent.index, 0, text);
         this.relocate();
         this.dom.value = '';
+        this.page.editor.fire("change")
       } else {
         //替换文字
         activeComponent.spliceChar(this.compositionIndex, this.compositeLength, text);
@@ -85,6 +86,7 @@ class Cursor {
     this.dom.value = '';
     this.compositeLength = 0;
     this.relocate();
+    this.page.editor.fire("change","compositionend")
   }
 
   checkStyle() {
