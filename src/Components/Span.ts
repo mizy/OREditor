@@ -32,6 +32,7 @@ class Span extends Base {
   data: ISpanData;
   localPos: { x: number; y: number; };// y 是文字底部基准线
   //tips: 尽量不要再初始化的过程中进行数据相关操作，否则类的操控会太过自动化，难以操控，尽量保持专职专能
+  rendered: boolean;
   constructor({ data, parent, prev, next }: ISpanOption) {
     super();
     this.parent = parent;
@@ -375,6 +376,8 @@ class Span extends Base {
     this.endLineNum = this.startLineNum + textHeights.length - 1;
     this.paths = paths;
     this.textHeights = textHeights;
+    this.rendered = false;
+    this.getBBox();// 这里也要更新rect，为了让后面的span能够链式渲染
   }
 
   updateParentLineHeight() {
@@ -430,7 +433,8 @@ class Span extends Base {
     this.dom.textContent = this.renderStr;
     this.dom.setAttribute('x', xStr);
     this.dom.setAttribute('y', yStr);
-    this.getBBox();
+    this.rendered = true;
+    this.getBBox();//这里再更新一遍，避免做居中后，path变更导致的rect也变更
   }
 
   getBBox() {
@@ -443,7 +447,9 @@ class Span extends Base {
     if (this.textHeights.length === 1) {
       rect.y = rect.endY;
     }
-    this.bbox = this.dom.getBBox();
+    if (this.rendered) {// 更新过后才会更新bbox
+      this.bbox = this.dom.getBBox();// 这里再第一次get的时候
+    }
     return rect;
   }
 

@@ -3,7 +3,7 @@ import { IParagraphData } from '../View/Page';
 export interface OREditorData {
   content: IParagraphData[];
   cursor?: {
-    index:number[]// [0,0,0] 表示第一个p的第一个span的index为0
+    index:number[]// [0,0,0] 表示第一个p的第一个span的index为0,用来还原光标状态
   }
 }
 class Schema {
