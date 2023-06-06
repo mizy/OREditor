@@ -1,11 +1,8 @@
 
 import { Page } from '..';
 import { OREditorData } from '../Data/Schema';
-import { IParagraphData } from '../View/Page';
-import BaseComponent from './Base';
 import P from './P';
 import Span from './Span';
-import * as components from './index'
 /**
  * @class
  * 全局坐标以renderer的左上角为原点
@@ -63,8 +60,10 @@ class Renderer {
     });
     this.headChild = this.children[0];
     this.headChild.update();
+    //init activeComponent
     this.activeComponent = this.headChild.headChild;
     this.activeComponent.index = 0;
+    this.activeComponent.focusLine = 0;
   }
 
   createElementNS(tag): SVGElement {

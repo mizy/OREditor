@@ -35,7 +35,6 @@ class Schema {
     if (this.diffJSON(json, lastJson)) {
       return;
     }
-    console.log('pushHistory', json);
     this.historyIndex++;
     this.history.splice(this.historyIndex, this.history.length, json);
   }

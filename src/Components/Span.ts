@@ -12,6 +12,10 @@ export interface ISpanData {
   type: string;
   style?: Record<string, any>;
   text?: string;
+  // this 3 params is for widget
+  width?: number;
+  height?: number;
+  data?: any;
 }
 class Span extends Base {
   name = "Span";
@@ -24,9 +28,9 @@ class Span extends Base {
   lineHeight: number;
   fontSizeHeight: number;
   disY: number;
-  index: number;
-  textHeights: number[];
-  paths: number[][];
+  index: number = 0;
+  textHeights: number[];//y 文字底部基准线
+  paths: number[][];// y 文字底部基准线
   renderStr: string;
   cleared: boolean;
   data: ISpanData;
@@ -115,6 +119,7 @@ class Span extends Base {
     // 当是当前行的第一个字母时，光标可以是上一行末尾，或当前行
     const prePos = this.indexMap[index - 1];
     const pos = this.indexMap[index];
+    if(!pos||!prePos)return false;
     // 不是同一行的情况下
     if (prePos.lineNum !== pos.lineNum) {
       return true
@@ -190,14 +195,13 @@ class Span extends Base {
    */
   calcPos() {
     let localPos;
+    const { textSpace } = this.style;
     // 有前置的情况
     if (this.prev) {
-      const { fontSize, textSpace } = this.style;
       const { rect } = this.prev;
       let lineNum = this.prev.endLineNum;
       const highComponent = this.parent.lineHeight[lineNum]?.component;
       //这里取前置的当前行最大组件
-      const prevSize = highComponent.style.fontSize;
       localPos = { x: rect.endX, y: rect.endY };
       const firstStrWidth = this.getFontWidth(this.data[0]);
       // 要换行的情况
@@ -209,7 +213,7 @@ class Span extends Base {
           top: localPos.y - this.fontSizeHeight - this.disY,
           bottom: localPos.y - this.fontSizeHeight - this.disY + this.lineHeight
         };
-      } else if (fontSize > prevSize) {//不换行的情况
+      } else if (this.fontSizeHeight > highComponent.fontSizeHeight) {//不换行的情况
         let top = this.parent.lineHeight[lineNum].top;
         let beforeY = localPos.y;
         localPos.y = top + this.disY + this.fontSizeHeight;
@@ -262,8 +266,8 @@ class Span extends Base {
    * 更新路径
    * @param {boolean} 是否是链式渲染下来的
    */
-  update(flag = true) {
-    if (flag)
+  update(calcPosflag = true) {
+    if (calcPosflag)
       this.calcPos();
 
     // 这里先生成坐标，再对坐标进行变换

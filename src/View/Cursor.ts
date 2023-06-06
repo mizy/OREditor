@@ -1,4 +1,6 @@
 import { Page } from '..';
+import { Span, Widget } from '../Components';
+import { ISpanData } from '../Components/Span';
 
 class Cursor {
   isFocus = true;
@@ -49,35 +51,37 @@ class Cursor {
         this.dom.value = '';
       }
     })
-    this.dom.addEventListener("input", (e) => {
-      e.preventDefault();
-      // if(!this.focus)return;
-      if (this.page.section.paths.length) {//有选中时，先删除选中项
-        editor.keyboard.execute("Delete");
-        this.compositionIndex = renderer.activeComponent.index;
-      }
-      this.checkStyle();
-      const text = this.dom.value;
-      const { activeComponent } = renderer;
-
-      if (!this.composition && text) {
-        activeComponent.spliceChar(activeComponent.index, 0, text);
-        this.relocate();
-        this.dom.value = '';
-        this.page.editor.fire("change")
-      } else {
-        //替换文字
-        activeComponent.spliceChar(this.compositionIndex, this.compositeLength, text);
-        activeComponent.index = this.compositionIndex + text.length;
-        this.compositeLength = text.length;
-        this.relocate();
-      }
-    });
+    this.dom.addEventListener("input", this.onInput);
     this.dom.addEventListener('compositionstart', (e) => {
       this.compositionIndex = this.style ? 0 : renderer.activeComponent.index;
       this.composition = true;
     });
     this.dom.addEventListener("compositionend", this.onCompositionEnd);
+  }
+
+  onInput = (e) => {
+    const { renderer, editor } = this.page;
+    e.preventDefault(); 
+    if (this.page.section.paths.length) {//有选中时，先删除选中项
+      editor.keyboard.execute("Delete");
+      this.compositionIndex = renderer.activeComponent.index;
+    }
+    this.checkNewSpan();
+    const text = this.dom.value;
+    const { activeComponent } = renderer;
+
+    if (!this.composition && text) {
+      activeComponent.spliceChar(activeComponent.index, 0, text);
+      this.relocate();
+      this.dom.value = '';
+      this.page.editor.fire("change")
+    } else {
+      //替换文字
+      activeComponent.spliceChar(this.compositionIndex, this.compositeLength, text);
+      activeComponent.index = this.compositionIndex + text.length;
+      this.compositeLength = text.length;
+      this.relocate();
+    }
   }
 
   onCompositionEnd = () => {
@@ -89,33 +93,38 @@ class Cursor {
     this.page.editor.fire("change","compositionend")
   }
 
-  checkStyle() {
+  diffStyle() {
     const { style } = this;
     const { renderer } = this.page;
-    if (style) {
+    const { activeComponent } = renderer;
+    const {style: nowStyle } = activeComponent;
+    let flag = false;
+    for (let key in style) {
+      if (style[key] !== nowStyle[key]) {
+        flag = true;
+      }
+    }
+    return flag
+  }
+
+  checkNewSpan() {
+    const { renderer } = this.page;
+    if (this.diffStyle()||renderer.activeComponent instanceof Widget) {
       const { activeComponent } = renderer;
       const { index, parent, data, style: nowStyle } = activeComponent;
-      let flag = true;
-      for (let key in style) {
-        if (style[key] !== nowStyle[key]) {
-          flag = false;
-        }
-      }
-      //是否新增标签·
-      if (flag) {
-        return
-      }
+     
       const length = data.text.length;
       const componentIndex = parent.children.indexOf(activeComponent);
       const spliceData = activeComponent.toJSON();
-      const nowData = {
+      const nowData:ISpanData = {
         style: {
           ...spliceData.style,
-          ...style,
+          ...this.style||{},
         },
-        data: ""
+        type: "span",
+        text: "",
       };
-      let now;
+      let now:Span;
       if (index === 0) {
         now = parent.insertSpan(componentIndex, nowData);
       } else if (index === length) {
@@ -125,11 +134,10 @@ class Cursor {
         spliceData.text = spliceChar;
         now = parent.insertSpan(componentIndex + 1, nowData);
         parent.insertSpan(componentIndex + 2, spliceData);
-
       }
       renderer.activeComponent = now;
       now.index = 0;
-      parent.update(true);//简单点
+      now.update(true);//简单点
       this.style = undefined;
     }
   }

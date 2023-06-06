@@ -120,5 +120,6 @@ export default OREditor;
 export {
   Page,
   Keyboard,
-  Event
+  Event,
+  Schema
 }

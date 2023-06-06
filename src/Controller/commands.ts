@@ -73,7 +73,8 @@ const getAllCommands = (editor: OREditor): ICommand[] => {
             component.data.text.length - nowIndex
           );
           newPData.children.push({
-            ...component.toJSON(),
+            style: component.toJSON().style,
+            type: "span",
             text: oldStr,
           });
         }
@@ -315,6 +316,8 @@ const getAllCommands = (editor: OREditor): ICommand[] => {
         });
         parent.update();
         cursor.relocate();
+        // 同时更新选中块，有点麻烦，得更改startPos的坐标，然后重新渲染,一般不会有这种需求
+        page.section.hide();
       },
       isValid
     }

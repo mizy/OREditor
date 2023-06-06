@@ -3,7 +3,7 @@ import { IParagraphData } from '../View/Page';
 import Base from './Base';
 import Renderer from './Renderer';
 import Span, { ISpanData } from './Span';
-import * as components from './index'
+import  {Components} from './index';
 /**
  * @class
  */
@@ -58,7 +58,7 @@ class P extends Base {
       this.prevTemp = undefined;
       return undefined;
     }
-    const instance = new Span({
+    const instance:Span = new Components[child.type]({
       data: child,
       parent: this,
       prev: this.prevTemp,
@@ -104,10 +104,10 @@ class P extends Base {
     this.headChild = this.getNext(0, children);
   }
 
-  insertSpan(index, data) {
+  insertSpan(index:number, data:ISpanData):Span {
     const prev = this.children[index - 1];
     const next = this.children[index];
-    const instance = new Span({
+    const instance = new Components[data.type]({
       data,
       parent: this,
       prev,
@@ -193,7 +193,7 @@ class P extends Base {
   }
 
   addEmptySpan() {
-    const instance = new components.span({
+    const instance = new Span({
       data: {
         text: "",
         type: "span",

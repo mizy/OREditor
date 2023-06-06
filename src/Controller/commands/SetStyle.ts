@@ -1,18 +1,22 @@
-export default function SetStyle(style,page,renderer){
+import { Page } from '../..';
+import { Span } from '../../Components';
+import P from '../../Components/P';
+
+export default function SetStyle(style,page:Page,renderer){
     let {section,cursor} = page;
     if(section.paths.length){
         const {selections,startPos,endPos} = section.getSelections();
-        let startComponent = selections[0];
-        const endComponent = selections[selections.length - 1];
+        let startComponent = selections[0] as Span;
+        const endComponent = selections[selections.length - 1] as Span;
         const startParent = startComponent.parent;
-        const endParent = endComponent.parent;
+        const endParent = endComponent.parent as P;
         const startStyle = {...startComponent.style};
         const endStyle = {...endComponent.style};
         let startIndex;
         if(startComponent===endComponent){
-            const beforeData = startComponent.data.substring(0,startPos.index);
-            const middleData = startComponent.data.substring(startPos.index,endPos.index);
-            const lastData =  startComponent.data.substring(endPos.index);
+            const beforeData = startComponent.data.text.substring(0,startPos.index);
+            const middleData = startComponent.data.text.substring(startPos.index,endPos.index);
+            const lastData =  startComponent.data.text.substring(endPos.index);
             startIndex = startParent.children.indexOf(startComponent);
             startComponent.destroy(false);
             let frist,mid,end;
@@ -52,7 +56,7 @@ export default function SetStyle(style,page,renderer){
             startParent.update(true);
             startParent.checkChildrenComposite()
         }else{
-            const startData = startComponent.spliceChar(startPos.index,startComponent.data.length-startPos.index);
+            const startData = startComponent.spliceChar(startPos.index,startComponent.data.text.length-startPos.index);
             startIndex = startParent.children.indexOf(startComponent);
             let first ;let end;
             // 如果开头有数据才插入
@@ -85,7 +89,7 @@ export default function SetStyle(style,page,renderer){
             // 中间的所有组件改变样式
             for(let i = 1;i<selections.length-1;i++){
                 const item =  selections[i];
-                if(item.name==="P"&&item.children){
+                if(item instanceof P&&item.children){
                     item.children.forEach(item=>{
                         Object.assign(item.style,style);
                         item.updateStyle();
