@@ -1,7 +1,5 @@
 {
-  "include": [
-    "src/**/*",
-  ],
+  "include": ["src/**/*"],
   "compileOnSave": true,
   "compilerOptions": {
     "pretty": true,
@@ -13,7 +11,7 @@
     "emitDecoratorMetadata": true,
     "jsx": "react",
     "outDir": "dist",
-    "module": "esnext",
+    "module": "NodeNext",
     "target": "ES2015",
     "resolveJsonModule": true,
     "moduleResolution": "NodeNext"
