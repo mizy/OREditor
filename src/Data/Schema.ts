@@ -12,7 +12,7 @@ class Schema {
   data: OREditorData;
   historyIndex: number = -1;
   historyTimeout: number = 5000;//10s
-  historyTimeoutRef: NodeJS.Timeout;
+  historyTimeoutRef:number;
   constructor(editor) {
     this.editor = editor;
     if (this.editor.option.data) {

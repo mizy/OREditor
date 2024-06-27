@@ -2,91 +2,91 @@
 <html>
 
 <body style="height:100vh">
-  <div id="root" style="height:100%"></div>
+    <div id="root" style="height:100%"></div>
 </body>
 <script src="./dist/index.js"></script>
 <script>
-  const editor = new OREditor({
-    container: document.querySelector("#root"),
-    width: 500
-  })
-  const testData = [
-    {
-      type: "p",
-      children: [
+    const editor = new OREditor({
+        container: document.querySelector("#root"),
+        width: 500
+    })
+    const testData = [
         {
-          data: {
-            href: "https://www-cdn.yueshu.cn/yueshu-website/images/dark-logo.png"
-          },
-          height: 200,
-          width: 400,
-          type: "image",
-          text: ' '
-        }]
-    },
-    {
-      type: "p",
-      children: [{
-        style: {
-          fontSize: 14,
+            type: "p",
+            children: [
+                {
+                    data: {
+                        href: "https://www-cdn.yueshu.cn/yueshu-website/images/dark-logo.png"
+                    },
+                    height: 200,
+                    width: 400,
+                    type: "image",
+                    text: ' '
+                }]
         },
-        type: "span",
-        text: '我 是\t'
-      }, {
-        style: {
-          fontSize: 32,
-        },
-        type: "span",
-        text: '是'
-      }, {
-        style: {
-          fontSize: 12,
-        },
-        type: "span",
-        text: 'GraphQL 带来的最大好处是精简请求响应内容，不会出现冗余字段，前端可以textabc后端返回什么数据。但要注意的是，前端的决定权取决于后端支持什么数据，因此 GraphQL 更像是精简了返回值的 REST，而后端接口也可以一次性定义完所有功能，而不需要逐个开发。'
-      }]
-    }, {
-      type: "p",
-      children: [{
-        type: "span",
-        text: "第二行的文本"
-      }, {
-        type: "span",
+        {
+            type: "p",
+            children: [{
+                style: {
+                    fontSize: 14,
+                },
+                type: "span",
+                text: '我 是\t'
+            }, {
+                style: {
+                    fontSize: 32,
+                },
+                type: "span",
+                text: '是'
+            }, {
+                style: {
+                    fontSize: 12,
+                },
+                type: "span",
+                text: 'GraphQL 带来的最大好处是精简请求响应内容，不会出现冗余字段，前端可以textabc后端返回什么数据。但要注意的是，前端的决定权取决于后端支持什么数据，因此 GraphQL 更像是精简了返回值的 REST，而后端接口也可以一次性定义完所有功能，而不需要逐个开发。'
+            }]
+        }, {
+            type: "p",
+            children: [{
+                type: "span",
+                text: "第二行的文本"
+            }, {
+                type: "span",
 
-        text: "第二行的文本大一点"
-      }]
-    }, {
-      type: "p",
-      listStyle: {
-        type: "ul"
-      },
-      children: [{
-        type: "span",
-        text: "第三行的文本"
-      }, {
-        type: "span",
-        style: {
-          fontSize: 18,
-        },
-        text: "第三行的文本大一点"
-      }]
-    }];
-  let str = '';
-  let i = 100;
-  while (i > 0) {
-    str += '发'
-    i--;
-  }
-  // testData[0].children.push({
-  //   style: {
-  //     fontSize: 18,
-  //   },
-  //   type: "span",
-  //   text: str
-  // })
-  editor.schema.setData({
-    content: testData
-  })
+                text: "第二行的文本大一点"
+            }]
+        }, {
+            type: "p",
+            listStyle: {
+                type: "ul"
+            },
+            children: [{
+                type: "span",
+                text: "第三行的文本"
+            }, {
+                type: "span",
+                style: {
+                    fontSize: 18,
+                },
+                text: "第三行的文本大一点"
+            }]
+        }];
+    let str = '';
+    let i = 100;
+    while (i > 0) {
+        str += '发'
+        i--;
+    }
+    // testData[0].children.push({
+    //   style: {
+    //     fontSize: 18,
+    //   },
+    //   type: "span",
+    //   text: str
+    // })
+    editor.schema.setData({
+        content: testData
+    })
 </script>
 
 </html>
