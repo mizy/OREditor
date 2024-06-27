@@ -3,7 +3,7 @@ a svg based rich text editor for high performance render
 一个基于SVG渲染的原生富文本编辑器，可高性能渲染大量文字
 
 # demo
-[https://mizy.github.io/oreditor/](https://mizy.github.io/oreditor/)
+[https://mizy.github.io/oreditor/dist](https://mizy.github.io/oreditor/dist)
 
 # test
 ```
