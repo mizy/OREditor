@@ -12,7 +12,7 @@ permissions:
 concurrency:
   group: "pages"
   cancel-in-progress: false
-  
+
 jobs:
   build:
     name: Docs & demo to GitHub Pages
@@ -29,6 +29,7 @@ jobs:
       - name: rm node_modules
         run: |
           rm -rf node_modules
+          rm -rf index.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll
